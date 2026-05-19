@@ -1,0 +1,308 @@
+/* =========================================
+   1. STYLE DE BASE ET TYPOGRAPHIE
+   ========================================= */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #fafafa;
+    color: #333;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* =========================================
+   2. EN-TÊTE ET COMPTEUR (Centrage absolu par Grille)
+   ========================================= */
+.header {
+    display: grid;
+    /* 3 colonnes : la 1ère prend tout l'espace libre à gauche (1fr), 
+       la 2ème s'adapte juste au texte (auto), la 3ème prend le même espace qu'à gauche (1fr) */
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+/* =========================================
+   3. BARRE DE RECHERCHE
+   ========================================= */
+.champ-recherche {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+    background-color: white;
+}
+.champ-recherche:focus {
+    outline: none;
+    border-color: #1a73e8; 
+}
+
+/* =========================================
+   4. BOUTONS : CONTAINERS ET BASE
+   ========================================= */
+.boutons-filtre {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+button {
+    cursor: pointer;
+    border-radius: 5px;
+    border: none;
+    font-weight: bold;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* =========================================
+   5. BOUTONS : FILTRES CLASSES & SERVICES (Inactifs)
+   ========================================= */
+.btn-filtre, .btn-service {
+    padding: 15px 25px;
+    font-size: 18px;
+    background-color: #e2e6ea;
+    color: #495057;
+    border: 1px solid #ced4da;
+    flex-grow: 1;
+}
+
+.btn-service {
+    padding: 10px;
+    font-size: 16px;
+}
+
+/* =========================================
+   6. BOUTONS : ACTIFS
+   ========================================= */
+.btn-filtre.actif {
+    background-color: #1a73e8; 
+    color: white;
+    border: none;
+}
+
+.btn-service.actif-service {
+    background-color: #28a745;
+    color: white;
+    border-color: #1e7e34;
+    border: none;
+}
+
+button:hover:not(.actif):not(.actif-service) {
+    background-color: #ced4da;
+}
+button:active:not(.actif):not(.actif-service) {
+    background-color: #b9c1c9;
+}
+
+/* =========================================
+   7. CARTES D'ENFANTS
+   ========================================= */
+.enfant-carte {
+    background: white;
+    padding: 20px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    font-size: 20px;
+    display: flex;
+    justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+.enfant-carte:hover {
+    background: #f8f9fa;
+}
+
+/* Carte Pointée (Mode Clair) */
+.enfant-carte.pointe {
+    background-color: #e6fffa;
+    border-left: 5px solid #28a745; 
+    color: #245c36; 
+}
+
+.enfant-carte.pointe small {
+    color: #495057; 
+}
+
+/* =========================================
+   8. BOUTON NOUVELLE JOURNÉE
+   ========================================= */
+.btn-large-reset {
+    background-color: #dc3545;
+    color: white;
+    width: 100%;
+    padding: 15px;
+    font-weight: bold;
+    font-size: 18px;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+}
+.btn-large-reset:hover {
+    background-color: #c82333;
+}
+.btn-large-reset:active {
+    background-color: #bd2130;
+}
+
+/* =========================================
+   9. MODE SOMBRE (S'active avec la classe .dark-mode)
+   ========================================= */
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+/* On s'assure que le mode sombre applique aussi la grille */
+body.dark-mode .header {
+    background: #1e1e1e;
+    color: #e0e0e0;
+    box-shadow: 0 2px 4px rgba(255,255,255,0.05);
+}
+
+body.dark-mode .champ-recherche {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-color: #444c56;
+}
+
+body.dark-mode .champ-recherche:focus {
+    border-color: #1a73e8;
+}
+
+/* Boutons inactifs en mode sombre */
+body.dark-mode .btn-filtre, 
+body.dark-mode .btn-service {
+    background-color: #444c56;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+/* Boutons actifs en mode sombre */
+body.dark-mode .btn-filtre.actif {
+    background-color: #1a73e8;
+    color: white;
+}
+
+body.dark-mode .btn-service.actif-service {
+    background-color: #1e7e34;
+    color: white;
+}
+
+/* Cartes en mode sombre */
+body.dark-mode .enfant-carte {
+    background: #2d2d2d;
+    color: #e0e0e0;
+    box-shadow: 0 1px 3px rgba(255,255,255,0.05);
+}
+body.dark-mode .enfant-carte:hover {
+    background: #383838;
+}
+
+/* Cartes pointées en mode sombre */
+body.dark-mode .enfant-carte.pointe {
+    background-color: #245c36; 
+    border-left: 5px solid #2ea043;
+    color: #ffffff;
+}
+
+body.dark-mode .enfant-carte.pointe small {
+    color: #bbb;
+}
+
+/* =========================================
+   10. ADAPTATION MOBILES (Smartphones & Petites Tablettes)
+   ========================================= */
+@media (max-width: 768px) {
+    /* L'en-tête passe sur une seule colonne centrée */
+    .header {
+        grid-template-columns: 1fr;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .header h1 {
+        font-size: 20px;
+    }
+
+    /* Les boutons s'autorisent à aller à la ligne au lieu de se compresser */
+    .boutons-filtre {
+        flex-wrap: wrap;
+    }
+    
+    /* Chaque bouton prend un tiers de l'écran pour rester cliquable au doigt */
+    .btn-filtre {
+        flex: 1 1 30%;
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    .btn-service {
+        flex: 1 1 100%; /* Les services passent les uns sous les autres */
+        margin-bottom: 5px;
+    }
+    
+    /* On réduit légèrement la taille des cartes pour gagner de la place */
+    .enfant-carte {
+        font-size: 16px;
+        padding: 15px;
+        flex-direction: column; /* Le bouton d'action passe sous le nom */
+        gap: 10px;
+    }
+    
+    .enfant-carte span:last-child {
+        text-align: right;
+    }
+}
+/* =========================================
+   11. ZONE D'IMPORTATION CSV
+   ========================================= */
+.zone-import {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: #e2e6ea;
+    border-radius: 8px;
+    text-align: center;
+}
+
+body.dark-mode .zone-import {
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    box-shadow: 0 2px 4px rgba(255,255,255,0.05);
+}
+
+/* Le design de notre nouveau bouton d'importation */
+.btn-import {
+    background-color: #1a73e8; /* Le même bleu pro que tes filtres */
+    color: white;
+    padding: 12px 25px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-block; /* Permet un centrage parfait */
+    transition: background-color 0.2s ease;
+}
+
+.btn-import:hover {
+    background-color: #155db0;
+}
+/* =========================================
+   12. SIGNATURE / PIED DE PAGE
+   ========================================= */
+.signature-footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-bottom: 20px;
+    font-size: 14px;
+    color: #6c757d; /* Gris discret en mode clair */
+}
+
+body.dark-mode .signature-footer {
+    color: #666; /* Gris adapté pour le mode sombre */
+}

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pointage Cantine Primaires</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    
+    <div style="text-align: right; margin-bottom: 10px;">
+        <button id="btn-theme" onclick="basculerTheme()" style="padding: 8px 15px; border-radius: 20px; cursor: pointer; border: none; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+            🌙 Mode Sombre
+        </button>
+    </div>
+
+<div class="header">
+        <h1 style="margin: 0; font-size: 24px;">Cantine : Pointage</h1>
+        
+        <div style="text-align: center;">
+            <h2 id="compteur" style="margin: 0;">Repas : 0 / 0</h2>
+            <div id="message-fin" style="margin-top: 5px; font-weight: bold; font-size: 18px;"></div>
+        </div>
+
+        <div></div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="barre-recherche" placeholder="🔍 Rechercher un prénom ou un nom..." onkeyup="lancerRecherche()" class="champ-recherche">
+    </div>
+
+    <div id="zone-services" style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <button onclick="changerService(1)" id="btn-s1" class="btn-service actif-service">🍽️ Service 1</button>
+        <button onclick="changerService(2)" id="btn-s2" class="btn-service">🍽️ Service 2</button>
+        <button onclick="changerService(3)" id="btn-s3" class="btn-service">🍽️ Service 3</button>
+    </div>
+
+    <div class="boutons-filtre" id="boutons-classes">
+        <button onclick="filtrerClasse('Tous')" class="btn-filtre actif">Voir Tous</button>
+        <button onclick="filtrerClasse('CP')" class="btn-filtre">CP</button>
+        <button onclick="filtrerClasse('CE1')" class="btn-filtre">CE1</button>
+        <button onclick="filtrerClasse('CE2')" class="btn-filtre">CE2</button>
+        <button onclick="filtrerClasse('CM1')" class="btn-filtre">CM1</button>
+        <button onclick="filtrerClasse('CM2')" class="btn-filtre">CM2</button>
+    </div>
+
+    <div id="filtres-services" class="boutons-filtre" style="display: none; margin-bottom: 20px;">
+        <button onclick="filtrerParService('Tous')" class="btn-filtre actif" id="f-serv-tous">Tous les services</button>
+        <button onclick="filtrerParService(1)" class="btn-filtre" id="f-serv-1">Service 1</button>
+        <button onclick="filtrerParService(2)" class="btn-filtre" id="f-serv-2">Service 2</button>
+        <button onclick="filtrerParService(3)" class="btn-filtre" id="f-serv-3">Service 3</button>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <button id="btn-mode" onclick="basculerMode()" style="background-color: #ffc107; color: black; width: 100%; padding: 15px; font-weight: bold; font-size: 18px; border-radius: 5px; border: none; cursor: pointer;">
+            Afficher les enfants déjà pointés (Corriger / Vérifier)
+        </button>
+    </div>
+
+    <div id="liste-enfants" class="liste-enfants">
+        </div>
+
+<div class="zone-import">
+        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 18px;">⚙️ Mise à jour de la liste</h3>
+        
+        <input type="file" id="fichier-csv" accept=".csv" onchange="importerCSV(event)" style="display: none;">
+        
+        <label for="fichier-csv" class="btn-import">
+            📂 Parcourir et choisir le fichier CSV
+        </label>
+
+        <p style="font-size: 14px; margin-top: 15px; margin-bottom: 0; opacity: 0.8;">Format attendu : Fichier CSV (séparateur point-virgule)</p>
+        
+      <div style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px;">
+        <button onclick="reinitialiserJournee()" class="btn-large-reset">
+            Nouvelle journée (Effacer tous les pointages)
+        </button>
+    </div>       
+       
+    </div>
+
+    <script src="script.js"></script>
+
+    <div class="signature-footer">
+        Développé pour le périscolaire de Kilstett par Mikaël | Version 0.1
+    </div>
+</body>
+</html>
