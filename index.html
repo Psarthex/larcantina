@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pointage Cantine Primaires</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
     
@@ -63,13 +64,13 @@
 <div class="zone-import">
         <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 18px;">⚙️ Mise à jour de la liste</h3>
         
-        <input type="file" id="fichier-csv" accept=".csv" onchange="importerCSV(event)" style="display: none;">
+        <input type="file" id="fichier-csv" accept=".csv, .xls, .xml" onchange="importerCSV(event)" style="display: none;">
         
         <label for="fichier-csv" class="btn-import">
-            📂 Parcourir et choisir le fichier CSV
+            📂 Parcourir et choisir le fichier
         </label>
 
-        <p style="font-size: 14px; margin-top: 15px; margin-bottom: 0; opacity: 0.8;">Format attendu : Fichier CSV (séparateur point-virgule)</p>
+        <p style="font-size: 14px; margin-top: 15px; margin-bottom: 0; opacity: 0.8;">Format attendu : Fichier CSV/XLS</p>
 
       <div style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px;">
         <button onclick="reinitialiserJournee()" class="btn-large-reset">

@@ -1,6 +1,13 @@
-// =========================================================================
-// VARIABLES GLOBALES & CONFIGURATION
-// =========================================================================
+const baseParDefaut = [
+    { id: 1, prenom: "Léo", nom: "Martin", classe: "CP", aMange: false, service: null, heurePointage: null, heureSortie: null },
+    { id: 2, prenom: "Mia", nom: "Bernard", classe: "CP", aMange: false, service: null, heurePointage: null, heureSortie: null },
+    { id: 3, prenom: "Théo", nom: "Dubois", classe: "CE1", aMange: false, service: null, heurePointage: null, heureSortie: null },
+    { id: 4, prenom: "Chloé", nom: "Thomas", classe: "CE1", aMange: false, service: null, heurePointage: null, heureSortie: null },
+    { id: 5, prenom: "Hugo", nom: "Robert", classe: "CE2", aMange: false, service: null, heurePointage: null, heureSortie: null },
+    { id: 6, prenom: "Emma", nom: "Richard", classe: "CM1", aMange: false, service: null, heurePointage: null, heureSortie: null },
+    { id: 7, prenom: "Lucas", nom: "Petit", classe: "CM2", aMange: false, service: null, heurePointage: null, heureSortie: null }
+];
+
 let baseEnfants = [];
 let filtresClasses = []; 
 let modeAttente = true; 
@@ -13,7 +20,7 @@ function chargerDonnees() {
     if (sauvegarde) {
         baseEnfants = JSON.parse(sauvegarde);
     } else {
-        baseEnfants = []; // Initialisation à vide maintenant que le fichier XLS pilote tout
+        baseEnfants = JSON.parse(JSON.stringify(baseParDefaut));
     }
 }
 
@@ -25,6 +32,7 @@ function reinitialiserJournee() {
     let reponse = prompt("⚠️ ATTENTION : Cela va remettre à zéro tous les pointages d'aujourd'hui.\nPour confirmer, tapez 'effacer' :");
 
     if (reponse !== null && reponse.toLowerCase().trim() === "effacer") {
+        // Au lieu de détruire la sauvegarde, on remet juste les compteurs de la journée à zéro
         baseEnfants.forEach(enfant => {
             enfant.aMange = false;
             enfant.service = null;
@@ -32,23 +40,12 @@ function reinitialiserJournee() {
             enfant.heureSortie = null;
         });
         
-        sauvegarderDonnees(); 
+        sauvegarderDonnees(); // On sauvegarde la liste avec les compteurs à zéro
         changerService(1); 
         rafraichirAffichage(); 
         alert("✅ Pointages réinitialisés ! La liste des enfants est conservée pour la prochaine journée.");
     } else if (reponse !== null) {
-        alert("❌ Le mot de sécurité est incorrect. L'effacement a été annulé.");
-    }
-}
-
-function supprimerEnfant(id) {
-    let enfant = baseEnfants.find(e => e.id === id);
-    if (!enfant) return;
-
-    if (confirm(`Es-tu sûr de vouloir retirer ${enfant.prenom} ${enfant.nom} de la liste de ce midi ?`)) {
-        baseEnfants = baseEnfants.filter(e => e.id !== id);
-        sauvegarderDonnees();
-        rafraichirAffichage();
+        alert("❌ Mot de sécurité incorrect. L'effacement a été annulé.");
     }
 }
 
@@ -111,9 +108,6 @@ function filtrerClasse(classe) {
     rafraichirAffichage(); 
 }
 
-// =========================================================================
-// GESTION DE L'AFFICHAGE & RENDU DES CARTES
-// =========================================================================
 function rafraichirAffichage() {
     let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
     boutonsClasses.forEach(btn => {
@@ -140,7 +134,7 @@ function rafraichirAffichage() {
     let enfantsFiltres = baseEnfants.filter(enfant => {
         let bonneClasse = (filtresClasses.length === 0) ? true : filtresClasses.includes(enfant.classe);
         let bonStatut = (enfant.aMange === !modeAttente); 
-        let identiteEnfant = (enfant.prenom + " " + UnifiedNom(enfant.nom)).toLowerCase();
+        let identiteEnfant = (enfant.prenom + " " + enfant.nom).toLowerCase();
         let correspondRecherche = identiteEnfant.includes(termeRecherche);
         
         let bonFiltreService = true;
@@ -155,9 +149,6 @@ function rafraichirAffichage() {
         enfantsFiltres.sort((a, b) => b.heurePointage.localeCompare(a.heurePointage));
     }
 
-    // Sécurité pour les chaînes de caractères de recherche
-    function UnifiedNom(str) { return str ? String(str) : ""; }
-
     enfantsFiltres.forEach(enfant => {
         let div = document.createElement("div");
         div.className = modeAttente ? "enfant-carte" : "enfant-carte pointe";
@@ -166,29 +157,14 @@ function rafraichirAffichage() {
         
         let infoService = "";
         if (!modeAttente && enfant.service !== null) {
-            infoService = `<br><small>Service ${enfant.service} - Entrée : ${enfant.heurePointage} (Sortie vers ${enfant.heureSortie})</small>`;
+            // Modification du texte avec la grammaire neutre et l'ajout de la sortie prévue
+            // Note : J'ai enlevé le style="color..." codé en dur pour laisser ton CSS gérer la couleur proprement selon le thème
+            infoService = `<br><small>Service ${enfant.service} - Heure d'entrée : ${enfant.heurePointage} (Sortie vers ${enfant.heureSortie})</small>`;
         }
         
-// Définition des couleurs dynamiques pour le bouton Pointer/Annuler
-        let couleurBordure = modeAttente ? "#009222" : "#ff0000"; 
-        let couleurFond = modeAttente ? "#009222" : "#ff0000"; 
-
-// La poubelle n'est générée que si on est en mode "Attente" (liste de base)
-        let boutonPoubelle = modeAttente 
-            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff4d4d; border-radius: 6px; font-size: 18px; cursor: pointer; padding: 6px 12px; transition: 0.2s;" title="Retirer de la liste">🗑️</button>` 
-            : "";
-// Structure scindée : Boutons bien séparés et mis en évidence
-        div.innerHTML = `
-            <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 5px 0;">
-                <strong>${enfant.prenom} ${enfant.nom}</strong> (${enfant.classe}) ${infoService}
-            </div>
-            <div class="zone-outils-carte" style="display: flex; align-items: center; gap: 15px;">
-                <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; padding: 6px 12px; color: inherit; transition: 0.2s;">
-                    ${texteAction}
-                </button>
-                ${boutonPoubelle}
-            </div>
-        `;        
+        div.innerHTML = `<span><strong>${enfant.prenom} ${enfant.nom}</strong> (${enfant.classe}) ${infoService}</span> <span><small>${texteAction}</small></span>`;
+        div.onclick = function() { inverserStatutEnfant(enfant.id); };
+        
         listeHTML.appendChild(div);
     });
 
@@ -202,25 +178,24 @@ function inverserStatutEnfant(idEnfant) {
             enfant.aMange = true;
             enfant.service = serviceActif;
             
+            // Calcul de l'heure d'entrée
             let maintenant = new Date();
             enfant.heurePointage = maintenant.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
             
+            // NOUVEAU : Calcul de l'heure de sortie (+20 minutes)
+            // 20 minutes = 20 * 60000 millisecondes
             let tempsSortie = new Date(maintenant.getTime() + 20 * 60000);
             enfant.heureSortie = tempsSortie.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
 
         } else {
-            childReset(enfant);
+            enfant.aMange = false;
+            enfant.service = null;
+            enfant.heurePointage = null;
+            enfant.heureSortie = null;
         }
         sauvegarderDonnees(); 
     }
     
-    function childReset(e) {
-        e.aMange = false;
-        e.service = null;
-        e.heurePointage = null;
-        e.heureSortie = null;
-    }
-
     document.getElementById("barre-recherche").value = "";
     termeRecherche = "";
     rafraichirAffichage();
@@ -269,14 +244,14 @@ function mettreAJourBoutonTheme() {
     }
 }
 
-// Initialisation au chargement du script
 chargerDonnees(); 
 chargerTheme();
 rafraichirAffichage();
 
-// =========================================================================
-// MOTEUR D'IMPORTATION DES EXTRACTIONS DE LA DIRECTION
-// =========================================================================
+// --------------------------------------------------------
+// IMPORTATION DU FICHIER (CSV, XLS, XML) VIA SHEETJS
+// --------------------------------------------------------
+
 function importerCSV(event) {
     let fichier = event.target.files[0];
     if (!fichier) return;
@@ -287,6 +262,7 @@ function importerCSV(event) {
         let data = new Uint8Array(e.target.result);
 
         try {
+            // Lecture du fichier via SheetJS
             let classeur = XLSX.read(data, {type: 'array'});
             let nomPremiereFeuille = classeur.SheetNames[0];
             let feuille = classeur.Sheets[nomPremiereFeuille];
@@ -296,8 +272,12 @@ function importerCSV(event) {
             let idCompteur = 1;
             let debutDonnees = false;
 
-            let jourActuel = new Date().getDay(); 
-            let indexColonneMidi = 15; // Valeur par défaut (Lundi)
+            // --- 1. DÉTECTION DU JOUR ACTUEL ---
+            let jourActuel = new Date().getDay(); // 0=Dim, 1=Lun, 2=Mar, 3=Mer, 4=Jeu, 5=Ven, 6=Sam
+
+            // --- 2. CONFIGURATION DES COLONNES ---
+            // A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, M=12, N=13, O=14, P=15
+            let indexColonneMidi = 15; // Lundi par défaut
 
             if (jourActuel === 1) {
                 indexColonneMidi = 15; // Lundi Midi (P)
@@ -309,6 +289,7 @@ function importerCSV(event) {
                 indexColonneMidi = 10; // Vendredi Midi (K)
             }
 
+            // --- 3. LECTURE DES LIGNES ---
             for (let i = 0; i < lignes.length; i++) {
                 let ligne = lignes[i];
 
@@ -316,6 +297,7 @@ function importerCSV(event) {
 
                 if (!debutDonnees) {
                     let texteLigne = ligne.join(" ").toLowerCase();
+                    // On cherche la ligne 7 avec le mot-clé
                     if (texteLigne.includes("inscrits") || texteLigne.includes("nom") || texteLigne.includes("prénom")) {
                         debutDonnees = true;
                     }
@@ -347,6 +329,7 @@ function importerCSV(event) {
                 }
             }
 
+            // --- 4. VALIDATION ---
             if (nouvelleBase.length > 0) {
                 baseEnfants = nouvelleBase;
                 sauvegarderDonnees();
