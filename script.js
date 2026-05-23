@@ -1,23 +1,36 @@
 // =========================================================================
-// VARIABLES GLOBALES & CONFIGURATION
+// VARIABLES GLOBALES & CONFIGURATION DE LA SEMAINE
 // =========================================================================
-let baseEnfants = [];
+let baseSemaine = []; // Stocke l'export complet du fichier (Tous les jours)
+let baseEnfants = []; // Stocke uniquement la liste générée pour le jour J
 let filtresClasses = []; 
 let modeAttente = true; 
 let termeRecherche = ""; 
 let serviceActif = 1; 
-let filtreServiceAffichage = 'Tous'; 
+let filtreServiceAffichage = 'Tous';
+let limiteAffichage = 20; // Nombre d'enfants affichés par défaut
 
 function chargerDonnees() {
-    let sauvegarde = localStorage.getItem('sauvegardeCantine');
-    if (sauvegarde) {
-        baseEnfants = JSON.parse(sauvegarde);
+    let sauvegardeSemaine = localStorage.getItem('sauvegardeSemaineCantine');
+    let sauvegardeJour = localStorage.getItem('sauvegardeCantine');
+    
+    if (sauvegardeSemaine) {
+        baseSemaine = JSON.parse(sauvegardeSemaine);
     } else {
-        baseEnfants = []; // Initialisation à vide maintenant que le fichier XLS pilote tout
+        baseSemaine = [];
+    }
+
+    if (sauvegardeJour) {
+        baseEnfants = JSON.parse(sauvegardeJour);
+    } else {
+        baseEnfants = []; 
     }
 }
 
 function sauvegarderDonnees() {
+    // On sauvegarde l'état de la semaine (les présences prévues)
+    localStorage.setItem('sauvegardeSemaineCantine', JSON.stringify(baseSemaine));
+    // On sauvegarde l'état du jour (les pointages effectifs)
     localStorage.setItem('sauvegardeCantine', JSON.stringify(baseEnfants));
 }
 
@@ -46,7 +59,8 @@ function supprimerEnfant(id) {
     if (!enfant) return;
 
     if (confirm(`Es-tu sûr de vouloir retirer ${enfant.prenom} ${enfant.nom} de la liste de ce midi ?`)) {
-        baseEnfants = baseEnfants.filter(e => e.id !== id);
+        // Au lieu de filtrer et d'effacer, on marque l'enfant comme masqué
+        enfant.masque = true;
         sauvegarderDonnees();
         rafraichirAffichage();
     }
@@ -54,12 +68,14 @@ function supprimerEnfant(id) {
 
 function lancerRecherche() {
     let champ = document.getElementById("barre-recherche");
-    termeRecherche = champ.value.toLowerCase(); 
+    termeRecherche = champ.value.toLowerCase();
+    limiteAffichage = 20; 
     rafraichirAffichage();
 }
 
 function basculerMode() {
     modeAttente = !modeAttente; 
+    limiteAffichage = 20;
     let btnMode = document.getElementById("btn-mode");
     let zoneServicesSelection = document.getElementById("zone-services"); 
     let zoneFiltresServices = document.getElementById("filtres-services"); 
@@ -99,6 +115,7 @@ function filtrerParService(service) {
 }
 
 function filtrerClasse(classe) {
+    limiteAffichage = 20;
     if (classe === 'Tous') {
         filtresClasses = []; 
     } else {
@@ -138,6 +155,9 @@ function rafraichirAffichage() {
     listeHTML.innerHTML = ""; 
 
     let enfantsFiltres = baseEnfants.filter(enfant => {
+        // S'assurer que l'enfant n'est pas masqué par la corbeille
+        if (enfant.masque) return false;
+
         let bonneClasse = (filtresClasses.length === 0) ? true : filtresClasses.includes(enfant.classe);
         let bonStatut = (enfant.aMange === !modeAttente); 
         let identiteEnfant = (enfant.prenom + " " + UnifiedNom(enfant.nom)).toLowerCase();
@@ -158,7 +178,10 @@ function rafraichirAffichage() {
     // Sécurité pour les chaînes de caractères de recherche
     function UnifiedNom(str) { return str ? String(str) : ""; }
 
-    enfantsFiltres.forEach(enfant => {
+// --- NOUVELLE GESTION DE LA LIMITE D'AFFICHAGE ---
+    let enfantsAAfficher = enfantsFiltres.slice(0, limiteAffichage);
+
+    enfantsAAfficher.forEach(enfant => {
         let div = document.createElement("div");
         div.className = modeAttente ? "enfant-carte" : "enfant-carte pointe";
         
@@ -169,20 +192,21 @@ function rafraichirAffichage() {
             infoService = `<br><small>Service ${enfant.service} - Entrée : ${enfant.heurePointage} (Sortie vers ${enfant.heureSortie})</small>`;
         }
         
-// Définition des couleurs dynamiques pour le bouton Pointer/Annuler
+        // Définition des couleurs dynamiques pour le bouton Pointer/Annuler
         let couleurBordure = modeAttente ? "#009222" : "#ff0000"; 
         let couleurFond = modeAttente ? "#009222" : "#ff0000"; 
 
-// La poubelle n'est générée que si on est en mode "Attente" (liste de base)
+        // La poubelle n'est générée que si on est en mode "Attente" (liste de base)
         let boutonPoubelle = modeAttente 
-            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff4d4d; border-radius: 6px; font-size: 18px; cursor: pointer; padding: 6px 12px; transition: 0.2s;" title="Retirer de la liste">🗑️</button>` 
+            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 6px; font-size: 14px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 6px 12px; transition: 0.2s;" title="Retirer de la liste">Supprimer</button>` 
             : "";
-// Structure scindée : Boutons bien séparés et mis en évidence
+            
+        // Structure scindée : Boutons bien séparés et mis en évidence
         div.innerHTML = `
             <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 5px 0;">
                 <strong>${enfant.prenom} ${enfant.nom}</strong> (${enfant.classe}) ${infoService}
             </div>
-            <div class="zone-outils-carte" style="display: flex; align-items: center; gap: 15px;">
+            <div class="zone-outils-carte" style="display: flex; align-items: center; gap: 120px;">
                 <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; padding: 6px 12px; color: inherit; transition: 0.2s;">
                     ${texteAction}
                 </button>
@@ -191,6 +215,20 @@ function rafraichirAffichage() {
         `;        
         listeHTML.appendChild(div);
     });
+
+    // --- LE BOUTON AFFICHER PLUS ---
+    if (enfantsFiltres.length > limiteAffichage) {
+        let btnPlus = document.createElement("button");
+        btnPlus.innerText = "👇 Afficher plus d'enfants 👇";
+        btnPlus.style.cssText = "background-color: #6c757d; color: white; border: none; border-radius: 6px; padding: 12px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-top: 15px; margin-bottom: 20px;";
+        
+        btnPlus.onclick = function() {
+            limiteAffichage += 20; 
+            rafraichirAffichage();
+        };
+
+        listeHTML.appendChild(btnPlus);
+    }
 
     mettreAJourCompteur();
 }
@@ -227,9 +265,14 @@ function inverserStatutEnfant(idEnfant) {
 }
 
 function mettreAJourCompteur() {
-    let repasValides = baseEnfants.filter(e => e.aMange === true).length;
-    let totalEnfants = baseEnfants.length;
+    // 1. On isole d'abord les enfants actifs (non masqués par la corbeille)
+    let enfantsActifs = baseEnfants.filter(e => !e.masque);
+
+    // 2. On calcule les statistiques uniquement sur ces enfants actifs
+    let repasValides = enfantsActifs.filter(e => e.aMange === true).length;
+    let totalEnfants = enfantsActifs.length;
     
+    // 3. Mise à jour de l'interface
     document.getElementById("compteur").innerText = `Repas : ${repasValides} / ${totalEnfants}`;
     
     let zoneMessage = document.getElementById("message-fin");
@@ -258,14 +301,26 @@ function chargerTheme() {
 
 function mettreAJourBoutonTheme() {
     let btnTheme = document.getElementById("btn-theme");
+    let btnRestaurer = document.getElementById("btn-restaurer"); 
+    
     if (document.body.classList.contains('dark-mode')) {
         btnTheme.innerText = "☀️ Mode Clair";
         btnTheme.style.backgroundColor = "#444c56"; 
         btnTheme.style.color = "#e0e0e0";
+        
+        if (btnRestaurer) {
+            btnRestaurer.style.backgroundColor = "#444c56";
+            btnRestaurer.style.color = "#e0e0e0";
+        }
     } else {
         btnTheme.innerText = "🌙 Mode Sombre";
         btnTheme.style.backgroundColor = "#e2e6ea"; 
         btnTheme.style.color = "black";
+        
+        if (btnRestaurer) {
+            btnRestaurer.style.backgroundColor = "#e2e6ea";
+            btnRestaurer.style.color = "black";
+        }
     }
 }
 
@@ -364,4 +419,89 @@ function importerCSV(event) {
     };
 
     lecteur.readAsArrayBuffer(fichier);
+}
+
+function ouvrirMenuRestauration() {
+    // On récupère uniquement les enfants marqués comme masqués
+    let exclus = baseEnfants.filter(e => e.masque === true);
+
+    if (exclus.length === 0) {
+        alert("ℹ️ Aucun enfant n'a été supprimé aujourd'hui.");
+        return;
+    }
+
+    // On prépare le texte de la liste
+    let message = "Sélectionnez le numéro de l'enfant à restaurer :\n\n";
+    exclus.forEach((enfant, index) => {
+        message += `${index + 1}. ${enfant.prenom} ${enfant.nom}\n`;
+    });
+
+    let choix = prompt(message);
+    
+    if (choix !== null) {
+        let indexSelection = parseInt(choix) - 1;
+        if (indexSelection >= 0 && indexSelection < exclus.length) {
+            let enfantAActiver = exclus[indexSelection];
+            
+            // On retire le masque pour le réintégrer
+            enfantAActiver.masque = false;
+            
+            sauvegarderDonnees();
+            rafraichirAffichage();
+            alert(`✅ ${enfantAActiver.prenom} ${enfantAActiver.nom} a été réintégré dans la liste.`);
+        } else {
+            alert("❌ Numéro invalide. Opération annulée.");
+        }
+    }
+}
+
+// =========================================================================
+// GESTION DE L'AJOUT MANUEL D'UN ENFANT IMPRÉVU
+// =========================================================================
+
+function ouvrirModalAjout() {
+    document.getElementById('modal-ajout').style.display = 'flex';
+}
+
+function fermerModalAjout() {
+    document.getElementById('modal-ajout').style.display = 'none';
+    // On vide les champs pour la prochaine fois
+    document.getElementById('ajout-prenom').value = '';
+    document.getElementById('ajout-nom').value = '';
+    document.getElementById('ajout-classe').value = 'Non précisée';
+}
+
+function validerAjoutEnfant() {
+    let prenom = document.getElementById('ajout-prenom').value.trim();
+    let nom = document.getElementById('ajout-nom').value.trim();
+    let classe = document.getElementById('ajout-classe').value;
+
+    if (prenom === "" || nom === "") {
+        alert("❌ Le prénom et le nom sont obligatoires.");
+        return;
+    }
+
+    // Sécurité : On génère un ID unique pour cet enfant (le plus grand ID + 1)
+    let maxId = 0;
+    if (baseEnfants.length > 0) {
+        maxId = Math.max(...baseEnfants.map(e => e.id));
+    }
+    
+    let nouvelEnfant = {
+        id: maxId + 1,
+        prenom: prenom,
+        nom: nom,
+        classe: classe,
+        aMange: false,
+        service: null,
+        heurePointage: null,
+        heureSortie: null,
+        masque: false
+    };
+
+    baseEnfants.push(nouvelEnfant);
+    sauvegarderDonnees();
+    rafraichirAffichage();
+    fermerModalAjout();
+    alert(`✅ ${prenom} ${nom} a été ajouté manuellement à la liste.`);
 }
