@@ -10,6 +10,7 @@ let serviceActif = 1;
 let filtreServiceAffichage = 'Tous';
 let limiteAffichage = 20; // Nombre d'enfants affichés par défaut
 
+
 function chargerDonnees() {
     let sauvegardeSemaine = localStorage.getItem('sauvegardeSemaineCantine');
     let sauvegardeJour = localStorage.getItem('sauvegardeCantine');
@@ -158,7 +159,7 @@ function rafraichirAffichage() {
         // S'assurer que l'enfant n'est pas masqué par la corbeille
         if (enfant.masque) return false;
 
-        let bonneClasse = (filtresClasses.length === 0) ? true : filtresClasses.includes(enfant.classe);
+    let bonneClasse = (filtresClasses.length === 0) ? true : filtresClasses.some(filtre => enfant.classe.startsWith(filtre));
         let bonStatut = (enfant.aMange === !modeAttente); 
         let identiteEnfant = (enfant.prenom + " " + UnifiedNom(enfant.nom)).toLowerCase();
         let correspondRecherche = identiteEnfant.includes(termeRecherche);
@@ -198,7 +199,7 @@ function rafraichirAffichage() {
 
         // La poubelle n'est générée que si on est en mode "Attente" (liste de base)
         let boutonPoubelle = modeAttente 
-            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 6px; font-size: 14px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 6px 12px; transition: 0.2s;" title="Retirer de la liste">Supprimer</button>` 
+            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 6px; font-size: 14px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 6px 12px; transition: 0.2s;" title="Retirer de la liste">Absent(e)</button>` 
             : "";
             
         // Structure scindée : Boutons bien séparés et mis en évidence
@@ -330,8 +331,49 @@ chargerTheme();
 rafraichirAffichage();
 
 // =========================================================================
-// MOTEUR D'IMPORTATION DES EXTRACTIONS DE LA DIRECTION
+// MOTEUR D'IMPORTATION DYNAMIQUE (RADAR) DES EXTRACTIONS DE LA DIRECTION
 // =========================================================================
+
+function trouverColonneCantine(lignesExcel, jourCible) {
+    const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
+    let nomJour = nomsJours[jourCible];
+
+    if (!nomJour) return -1;
+
+    let indexColJour = -1;
+    let indexLigneJour = -1;
+
+    // Étape 1 : Trouver la case contenant le jour
+    for (let i = 0; i < 20; i++) {
+        if (!lignesExcel[i]) continue;
+        for (let j = 0; j < lignesExcel[i].length; j++) {
+            let cellule = String(lignesExcel[i][j] || "").trim().toLowerCase();
+            if (cellule.includes(nomJour.toLowerCase())) {
+                indexColJour = j;
+                indexLigneJour = i;
+                break;
+            }
+        }
+        if (indexColJour !== -1) break;
+    }
+
+    if (indexColJour === -1) return -1;
+
+    // Étape 2 : Chercher la sous-colonne "Midi" UNIQUEMENT sur ou après ce jour
+    for (let i = indexLigneJour; i <= indexLigneJour + 4; i++) {
+        if (!lignesExcel[i]) continue;
+        // La correction est ici : on commence la recherche pile à indexColJour (plus de retour en arrière)
+        for (let j = indexColJour; j <= indexColJour + 3; j++) {
+            let cellule = String(lignesExcel[i][j] || "").trim().toLowerCase();
+            if (cellule.includes("midi")) {
+                return j;
+            }
+        }
+    }
+
+    return indexColJour; // Sécurité si "Midi" n'est pas trouvé
+}
+
 function importerCSV(event) {
     let fichier = event.target.files[0];
     if (!fichier) return;
@@ -343,63 +385,103 @@ function importerCSV(event) {
 
         try {
             let classeur = XLSX.read(data, {type: 'array'});
-            let nomPremiereFeuille = classeur.SheetNames[0];
-            let feuille = classeur.Sheets[nomPremiereFeuille];
+            let feuille = classeur.Sheets[classeur.SheetNames[0]];
             let lignes = XLSX.utils.sheet_to_json(feuille, {header: 1});
 
             let nouvelleBase = [];
             let idCompteur = 1;
-            let debutDonnees = false;
+            
+            // --- ⚙️ CONFIGURATION DES CLASSES ---
+            // L'ordre exact d'apparition des groupes dans le fichier d'export
+            let ordreClasses = ["CPB", "CE1", "CM1", "CM2", "CE2", "CPA"];
+            let indexGroupeCourant = -1; 
 
-            let jourActuel = new Date().getDay(); 
-            let indexColonneMidi = 15; // Valeur par défaut (Lundi)
+            // --- ⚠️ MODE TEST WEEK-END ---
+            // LUNDI : N'oublie pas de remettre let jourActuel = new Date().getDay();
+            let jourActuel = 5; 
 
-            if (jourActuel === 1) {
-                indexColonneMidi = 15; // Lundi Midi (P)
-            } else if (jourActuel === 2) {
-                indexColonneMidi = 4;  // Mardi Midi (E)
-            } else if (jourActuel === 4) {
-                indexColonneMidi = 7;  // Jeudi Midi (H)
-            } else if (jourActuel === 5) {
-                indexColonneMidi = 10; // Vendredi Midi (K)
+            const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
+            let nomDuJour = nomsJours[jourActuel] || "ce jour";
+
+            let indexColonneMidi = trouverColonneCantine(lignes, jourActuel);
+
+            if (indexColonneMidi === -1) {
+                alert(`❌ Le radar n'a pas trouvé la colonne du repas pour ${nomDuJour}.`);
+                return;
+            }
+
+            let totalAttendu = 0;
+            for (let i = lignes.length - 1; i >= 0; i--) {
+                if (lignes[i] && lignes[i][indexColonneMidi] !== undefined) {
+                    let val = String(lignes[i][indexColonneMidi]).trim();
+                    let num = parseInt(val, 10);
+                    if (!isNaN(num) && num > 0 && val === String(num)) {
+                        totalAttendu = num;
+                        break;
+                    }
+                }
             }
 
             for (let i = 0; i < lignes.length; i++) {
                 let ligne = lignes[i];
-
                 if (!ligne || ligne.length === 0) continue;
 
-                if (!debutDonnees) {
-                    let texteLigne = ligne.join(" ").toLowerCase();
-                    if (texteLigne.includes("inscrits") || texteLigne.includes("nom") || texteLigne.includes("prénom")) {
-                        debutDonnees = true;
-                    }
+                let texteLigne = ligne.join(" ").toLowerCase();
+
+                // DÉTECTION DU GROUPE : Dès qu'on voit l'en-tête, on passe à la classe suivante
+                if (texteLigne.includes("inscrits") && (texteLigne.includes("régime") || texteLigne.includes("allergies"))) {
+                    indexGroupeCourant++;
                     continue; 
                 }
 
-                if (ligne.length >= 2 && ligne[0] !== undefined && ligne[1] !== undefined) {
-                    let estPrevuCeMidi = false;
+                if (indexGroupeCourant === -1) continue;
 
-                    if (ligne[indexColonneMidi]) {
-                        let valeurCase = String(ligne[indexColonneMidi]).toUpperCase().trim();
-                        if (valeurCase === "X" || valeurCase === "1" || valeurCase === "OUI") {
-                            estPrevuCeMidi = true;
-                        }
-                    }
-
-                    if (estPrevuCeMidi) {
-                        nouvelleBase.push({
-                            id: idCompteur++,
-                            nom: String(ligne[0]).trim(),
-                            prenom: String(ligne[1]).trim(),
-                            classe: "Non précisée", 
-                            aMange: false,
-                            service: null,
-                            heurePointage: null,
-                            heureSortie: null
-                        });
+                let identiteBrute = "";
+                for (let c = 0; c <= 3; c++) {
+                    if (ligne[c] && String(ligne[c]).trim().length > 2) {
+                        identiteBrute = String(ligne[c]).trim();
+                        break;
                     }
                 }
+
+                if (identiteBrute === "") continue;
+                if (identiteBrute.toLowerCase().includes("total") || identiteBrute.toLowerCase().includes("aucun")) continue;
+
+                let estPrevuCeMidi = false;
+                
+                if (ligne[indexColonneMidi] !== undefined && ligne[indexColonneMidi] !== null) {
+                    let valeurCase = String(ligne[indexColonneMidi]).toUpperCase().trim();
+                    if (valeurCase === "X" || valeurCase === "V" || valeurCase === "1" || valeurCase === "OUI" || valeurCase === "O" || valeurCase === "AJ") {
+                        estPrevuCeMidi = true;
+                    }
+                }
+
+                if (estPrevuCeMidi) {
+                    let mots = identiteBrute.split(" ");
+                    let nom = mots[0] || "Inconnu";
+                    let prenom = mots.slice(1).join(" ") || "";
+
+                    // ATTRIBUTION AUTOMATIQUE DE LA CLASSE selon le nouvel ordre
+                    let classeAttribuee = ordreClasses[indexGroupeCourant] || "Non précisée";
+
+                    nouvelleBase.push({
+                        id: idCompteur++,
+                        nom: nom,
+                        prenom: prenom,
+                        classe: classeAttribuee, 
+                        aMange: false,
+                        service: null,
+                        heurePointage: null,
+                        heureSortie: null,
+                        masque: false
+                    });
+                }
+            }
+
+            if (totalAttendu > 0 && nouvelleBase.length !== totalAttendu) {
+                alert(`❌ ALERTE DE SÉCURITÉ :\nLe fichier indique un total de ${totalAttendu} enfants prévus pour le repas de ${nomDuJour}, mais l'application en a détecté ${nouvelleBase.length}.\n\nL'importation a été bloquée pour éviter toute erreur de pointage.`);
+                document.getElementById("fichier-csv").value = "";
+                return; 
             }
 
             if (nouvelleBase.length > 0) {
@@ -407,13 +489,13 @@ function importerCSV(event) {
                 sauvegarderDonnees();
                 rafraichirAffichage();
                 document.getElementById("fichier-csv").value = "";
-                alert("✅ Importation réussie ! " + nouvelleBase.length + " enfants chargés pour le repas de ce midi.");
+                alert(`✅ Importation sécurisée réussie !\nLe radar a détecté les ${nouvelleBase.length} enfants prévus pour le repas de ${nomDuJour}, et a trié les classes automatiquement.`);
             } else {
-                alert("❌ Erreur : Aucun enfant trouvé avec une croix pour le repas de ce midi.");
+                alert(`❌ Aucun enfant trouvé pour le repas de ${nomDuJour}.`);
             }
 
         } catch (erreur) {
-            console.error("Erreur de lecture SheetJS :", erreur);
+            console.error(erreur);
             alert("❌ Erreur : Impossible d'analyser le fichier.");
         }
     };
