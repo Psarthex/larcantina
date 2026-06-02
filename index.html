@@ -108,16 +108,17 @@
         Développé pour le périscolaire de Kilstett par Mikaël | Version 0.5
     </div>
     <div id="modal-ajout" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;">
-        <div style="background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; color: black; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        <div class="boite-modale" style="padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
             <h3 style="margin-top: 0; text-align: center;">Ajouter un imprévu</h3>
             
             <input type="text" id="ajout-prenom" placeholder="Prénom" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
-            
             <input type="text" id="ajout-nom" placeholder="Nom" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
             
             <select id="ajout-classe" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
                 <option value="Non précisée">Classe non précisée</option>
-                <option value="CP">CP</option>
+                <option value="Maternelle">Maternelle (PS/MS/GS)</option>
+                <option value="CPA">CPA</option>
+                <option value="CPB">CPB</option>
                 <option value="CE1">CE1</option>
                 <option value="CE2">CE2</option>
                 <option value="CM1">CM1</option>
@@ -129,6 +130,22 @@
                 <button onclick="validerAjoutEnfant()" style="padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Ajouter</button>
             </div>
         </div>
+    </div>
+
+    <div id="modal-restauration" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="boite-modale" style="padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+            <h3 style="margin-top: 0; text-align: center;">Réintégrer un enfant</h3>
+            <p style="font-size: 14px; text-align: center; margin-bottom: 15px;">Sélectionnez l'enfant à remettre dans la liste :</p>
+            
+            <select id="select-restauration" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px;">
+                </select>
+            
+            <div style="display: flex; justify-content: space-between;">
+                <button onclick="fermerModalRestauration()" style="padding: 10px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Annuler</button>
+                <button onclick="validerRestaurationEnfant()" style="padding: 10px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Réintégrer</button>
+            </div>
+        </div>
+    </div>
     </div>
 </body>
 </html>

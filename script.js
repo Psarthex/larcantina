@@ -543,37 +543,92 @@ function importerCSV(event) {
     lecteur.readAsArrayBuffer(fichier);
 }
 
+// =========================================================================
+// GESTION DE LA RESTAURATION D'UN ENFANT ABSENT
+// =========================================================================
+
 function ouvrirMenuRestauration() {
-    // On récupère uniquement les enfants marqués comme masqués
     let exclus = baseEnfants.filter(e => e.masque === true);
 
     if (exclus.length === 0) {
-        alert("ℹ️ Aucun enfant n'a été supprimé aujourd'hui.");
+        alert("ℹ️ Aucun enfant n'est actuellement absent ou supprimé de la liste.");
         return;
     }
 
-    // On prépare le texte de la liste
-    let message = "Sélectionnez le numéro de l'enfant à restaurer :\n\n";
-    exclus.forEach((enfant, index) => {
-        message += `${index + 1}. ${enfant.prenom} ${enfant.nom}\n`;
+    // 1. Définition de l'ordre hiérarchique des classes pour le menu
+    const ordreClassesRestauration = {
+        "Maternelle": 1, "CPA": 2, "CPB": 3, "CE1": 4, 
+        "CE2": 5, "CM1": 6, "CM2": 7, "Non précisée": 8
+    };
+
+    // 2. Double Tri : Par classe en priorité, puis par nom de famille
+    exclus.sort((a, b) => {
+        let rangA = ordreClassesRestauration[a.classe] || 99;
+        let rangB = ordreClassesRestauration[b.classe] || 99;
+        
+        // Si les classes sont différentes, on trie par classe
+        if (rangA !== rangB) {
+            return rangA - rangB; 
+        }
+        // Si c'est la même classe, on trie par ordre alphabétique
+        return String(a.nom).localeCompare(String(b.nom));
     });
 
-    let choix = prompt(message);
-    
-    if (choix !== null) {
-        let indexSelection = parseInt(choix) - 1;
-        if (indexSelection >= 0 && indexSelection < exclus.length) {
-            let enfantAActiver = exclus[indexSelection];
-            
-            // On retire le masque pour le réintégrer
-            enfantAActiver.masque = false;
-            
-            sauvegarderDonnees();
-            rafraichirAffichage();
-            alert(`✅ ${enfantAActiver.prenom} ${enfantAActiver.nom} a été réintégré dans la liste.`);
-        } else {
-            alert("❌ Numéro invalide. Opération annulée.");
+    let selectHTML = document.getElementById("select-restauration");
+    selectHTML.innerHTML = ""; // On vide la liste précédente
+
+    let optgroupCourant = null;
+    let classeCourante = "";
+
+    // 3. Injection dans le menu avec création dynamique des séparateurs
+    exclus.forEach(enfant => {
+        // Dès que la boucle détecte une nouvelle classe, elle crée un séparateur
+        if (enfant.classe !== classeCourante) {
+            classeCourante = enfant.classe;
+            optgroupCourant = document.createElement("optgroup");
+            optgroupCourant.label = `--- 📚 ${classeCourante} ---`;
+            selectHTML.appendChild(optgroupCourant);
         }
+
+        // Création de l'enfant
+        let option = document.createElement("option");
+        option.value = enfant.id;
+        option.text = `${enfant.nom} ${enfant.prenom}`; // Plus besoin d'afficher la classe ici
+        
+        // On range l'enfant dans le séparateur en cours
+        if (optgroupCourant) {
+            optgroupCourant.appendChild(option);
+        } else {
+            selectHTML.appendChild(option);
+        }
+    });
+
+    // On affiche la fenêtre modale
+    document.getElementById("modal-restauration").style.display = "flex";
+}
+
+function fermerModalRestauration() {
+    document.getElementById("modal-restauration").style.display = "none";
+}
+
+function validerRestaurationEnfant() {
+    let selectElement = document.getElementById("select-restauration");
+    let idSelectionne = parseInt(selectElement.value);
+
+    let enfantAActiver = baseEnfants.find(e => e.id === idSelectionne);
+
+    if (enfantAActiver) {
+        // On retire le masque
+        enfantAActiver.masque = false;
+        
+        sauvegarderDonnees();
+        rafraichirAffichage();
+        fermerModalRestauration();
+        
+        // Un petit délai pour éviter les bugs d'affichage sur smartphone
+        setTimeout(() => {
+            alert(`✅ ${enfantAActiver.prenom} ${enfantAActiver.nom} a été réintégré(e) dans la liste.`);
+        }, 100);
     }
 }
 

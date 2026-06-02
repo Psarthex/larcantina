@@ -306,3 +306,25 @@ body.dark-mode .zone-import {
 body.dark-mode .signature-footer {
     color: #666; /* Gris adapté pour le mode sombre */
 }
+
+/* =========================================
+   FENÊTRES MODALES (Ajout & Restauration)
+   ========================================= */
+.boite-modale {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+/* Bascule en mode sombre */
+body.dark-mode .boite-modale {
+    background-color: #2b2b2b;
+    color: #f1f1f1;
+}
+
+/* Adaptation des menus déroulants et champs de texte dans les modales */
+body.dark-mode .boite-modale input,
+body.dark-mode .boite-modale select {
+    background-color: #444c56;
+    color: #ffffff;
+    border: 1px solid #666;
+}
