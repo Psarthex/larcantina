@@ -232,6 +232,7 @@ function rafraichirAffichage() {
     }
 
     mettreAJourCompteur();
+    mettreAJourCompteursFiltres();
 }
 
 function inverserStatutEnfant(idEnfant) {
@@ -398,7 +399,8 @@ function importerCSV(event) {
 
             // --- ⚠️ MODE TEST WEEK-END ---
             // LUNDI : N'oublie pas de remettre let jourActuel = new Date().getDay();
-            let jourActuel = 5; 
+            //let jourActuel = 5; 
+            let jourActuel = new Date().getDay()
 
             const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
             let nomDuJour = nomsJours[jourActuel] || "ce jour";
@@ -586,4 +588,50 @@ function validerAjoutEnfant() {
     rafraichirAffichage();
     fermerModalAjout();
     alert(`✅ ${prenom} ${nom} a été ajouté manuellement à la liste.`);
+}
+
+// =========================================================================
+// ACTIONS DE MASSE ET COMPTEURS DYNAMIQUES
+// =========================================================================
+
+function absenterClasseComplete(classeCible) {
+    if (confirm(`Action de sécurité : Es-tu sûr de vouloir marquer tous les élèves de ${classeCible} comme absents ce midi ?`)) {
+        let compteurAbsents = 0;
+        baseEnfants.forEach(enfant => {
+            if (enfant.classe === classeCible && !enfant.masque && !enfant.aMange) {
+                enfant.masque = true; 
+                compteurAbsents++;
+            }
+        });
+        
+        if (compteurAbsents > 0) {
+            sauvegarderDonnees();
+            rafraichirAffichage();
+            alert(`✅ ${compteurAbsents} enfant(s) de ${classeCible} ont été marqués comme absents.`);
+        } else {
+            alert(`ℹ️ Aucun enfant de ${classeCible} à absenter (ils sont déjà pointés ou déjà absents).`);
+        }
+    }
+}
+
+function mettreAJourCompteursFiltres() {
+    let compteurs = { "CPA": 0, "CPB": 0, "CE1": 0, "CE2": 0, "CM1": 0, "CM2": 0 };
+    let totalEnAttente = 0;
+
+    baseEnfants.forEach(enfant => {
+        if (!enfant.masque && !enfant.aMange) { 
+            if (compteurs[enfant.classe] !== undefined) {
+                compteurs[enfant.classe]++;
+            }
+            totalEnAttente++;
+        }
+    });
+
+    document.getElementById('btn-filtre-cpa').innerText = `CPA (${compteurs["CPA"]})`;
+    document.getElementById('btn-filtre-cpb').innerText = `CPB (${compteurs["CPB"]})`;
+    document.getElementById('btn-filtre-ce1').innerText = `CE1 (${compteurs["CE1"]})`;
+    document.getElementById('btn-filtre-ce2').innerText = `CE2 (${compteurs["CE2"]})`;
+    document.getElementById('btn-filtre-cm1').innerText = `CM1 (${compteurs["CM1"]})`;
+    document.getElementById('btn-filtre-cm2').innerText = `CM2 (${compteurs["CM2"]})`;
+    document.getElementById('btn-filtre-tous').innerText = `Voir Tous (${totalEnAttente})`;
 }

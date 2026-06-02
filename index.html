@@ -43,13 +43,24 @@
         <button onclick="changerService(3)" id="btn-s3" class="btn-service">🍽️ Service 3</button>
     </div>
 
-    <div class="boutons-filtre" id="boutons-classes">
-        <button onclick="filtrerClasse('Tous')" class="btn-filtre actif">Voir Tous</button>
-        <button onclick="filtrerClasse('CP')" class="btn-filtre">CP</button>
-        <button onclick="filtrerClasse('CE1')" class="btn-filtre">CE1</button>
-        <button onclick="filtrerClasse('CE2')" class="btn-filtre">CE2</button>
-        <button onclick="filtrerClasse('CM1')" class="btn-filtre">CM1</button>
-        <button onclick="filtrerClasse('CM2')" class="btn-filtre">CM2</button>
+<div class="boutons-filtre" id="boutons-classes">
+        <button id="btn-filtre-tous" onclick="filtrerClasse('Tous')" class="btn-filtre actif">Voir Tous (0)</button>
+        <button id="btn-filtre-cpa" onclick="filtrerClasse('CPA')" class="btn-filtre">CPA (0)</button>
+        <button id="btn-filtre-cpb" onclick="filtrerClasse('CPB')" class="btn-filtre">CPB (0)</button>
+        <button id="btn-filtre-ce1" onclick="filtrerClasse('CE1')" class="btn-filtre">CE1 (0)</button>
+        <button id="btn-filtre-ce2" onclick="filtrerClasse('CE2')" class="btn-filtre">CE2 (0)</button>
+        <button id="btn-filtre-cm1" onclick="filtrerClasse('CM1')" class="btn-filtre">CM1 (0)</button>
+        <button id="btn-filtre-cm2" onclick="filtrerClasse('CM2')" class="btn-filtre">CM2 (0)</button>
+    </div>
+
+    <div id="zone-actions-rapides" style="margin-bottom: 20px; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+        <button onclick="absenterClasseComplete('CPA')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">🚫 Absenter CPA</button>
+        <button onclick="absenterClasseComplete('CPB')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">🚫 Absenter CPB</button>
+        <button onclick="absenterClasseComplete('CE1')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">🚫 Absenter CE1</button>
+        <button onclick="absenterClasseComplete('CE2')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">🚫 Absenter CE2</button>
+        <button onclick="absenterClasseComplete('CM1')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">🚫 Absenter CM1</button>
+        <button onclick="absenterClasseComplete('CM2')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">🚫 Absenter CM2</button>
+    </div>
     </div>
 
     <div id="filtres-services" class="boutons-filtre" style="display: none; margin-bottom: 20px;">
