@@ -133,15 +133,25 @@ function filtrerClasse(classe) {
 // GESTION DE L'AFFICHAGE & RENDU DES CARTES
 // =========================================================================
 function rafraichirAffichage() {
-    let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
+let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
     boutonsClasses.forEach(btn => {
-        let nomBouton = btn.innerText;
-        if (filtresClasses.length === 0 && nomBouton === 'Voir Tous') {
-            btn.classList.add("actif");
-        } else if (filtresClasses.includes(nomBouton)) {
-            btn.classList.add("actif");
+        let idBouton = btn.id; // Ex: btn-filtre-cpa
+        
+        if (idBouton === "btn-filtre-tous") {
+            if (filtresClasses.length === 0) {
+                btn.classList.add("actif");
+            } else {
+                btn.classList.remove("actif");
+            }
         } else {
-            btn.classList.remove("actif");
+            // On extrait le nom de la classe depuis l'ID (ex: "cpa" devient "CPA")
+            let classeBouton = idBouton.replace("btn-filtre-", "").toUpperCase();
+            
+            if (filtresClasses.includes(classeBouton)) {
+                btn.classList.add("actif");
+            } else {
+                btn.classList.remove("actif");
+            }
         }
     });
 
@@ -270,11 +280,11 @@ function mettreAJourCompteur() {
     // 1. On isole d'abord les enfants actifs (non masqués par la corbeille)
     let enfantsActifs = baseEnfants.filter(e => !e.masque);
 
-    // 2. On calcule les statistiques uniquement sur ces enfants actifs
+    // 2. On calcule les statistiques globales
     let repasValides = enfantsActifs.filter(e => e.aMange === true).length;
     let totalEnfants = enfantsActifs.length;
     
-    // 3. Mise à jour de l'interface
+    // 3. Mise à jour du compteur principal en haut de l'écran
     document.getElementById("compteur").innerText = `Repas : ${repasValides} / ${totalEnfants}`;
     
     let zoneMessage = document.getElementById("message-fin");
@@ -284,6 +294,34 @@ function mettreAJourCompteur() {
     } else {
         zoneMessage.innerText = "";
     }
+
+    // 4. Calcul dynamique des présences par service
+    let compteursService = { 1: 0, 2: 0, 3: 0 };
+    enfantsActifs.forEach(e => {
+        if (e.aMange && compteursService[e.service] !== undefined) {
+            compteursService[e.service]++;
+        }
+    });
+
+    // 5. Mise à jour visuelle des boutons de sélection (Mode Pointage)
+    let btnS1 = document.getElementById("btn-s1");
+    if (btnS1) btnS1.innerText = `🍽️ 1er Service (${compteursService[1]})`;
+    
+    let btnS2 = document.getElementById("btn-s2");
+    if (btnS2) btnS2.innerText = `🍽️ 2ème Service (${compteursService[2]})`;
+    
+    let btnS3 = document.getElementById("btn-s3");
+    if (btnS3) btnS3.innerText = `🍽️ 3ème Service (${compteursService[3]})`;
+
+    // 6. Mise à jour visuelle des boutons de filtres (Mode Vérification)
+    let fServ1 = document.getElementById("f-serv-1");
+    if (fServ1) fServ1.innerText = `Service 1 (${compteursService[1]})`;
+    
+    let fServ2 = document.getElementById("f-serv-2");
+    if (fServ2) fServ2.innerText = `Service 2 (${compteursService[2]})`;
+    
+    let fServ3 = document.getElementById("f-serv-3");
+    if (fServ3) fServ3.innerText = `Service 3 (${compteursService[3]})`;
 }
 
 function basculerTheme() {
@@ -594,22 +632,29 @@ function validerAjoutEnfant() {
 // ACTIONS DE MASSE ET COMPTEURS DYNAMIQUES
 // =========================================================================
 
-function absenterClasseComplete(classeCible) {
-    if (confirm(`Action de sécurité : Es-tu sûr de vouloir marquer tous les élèves de ${classeCible} comme absents ce midi ?`)) {
-        let compteurAbsents = 0;
-        baseEnfants.forEach(enfant => {
-            if (enfant.classe === classeCible && !enfant.masque && !enfant.aMange) {
-                enfant.masque = true; 
-                compteurAbsents++;
-            }
-        });
-        
-        if (compteurAbsents > 0) {
+function gererAbsenceClasse(classeCible) {
+    // On isole les enfants de cette classe qui ne sont pas encore passés à la cantine
+    let enfantsDeLaClasse = baseEnfants.filter(e => e.classe === classeCible && !e.aMange);
+    let enfantsActifs = enfantsDeLaClasse.filter(e => !e.masque);
+
+    if (enfantsActifs.length > 0) {
+        // ACTION : ABSENTER (S'il reste des enfants actifs dans la liste)
+        if (confirm(`Action de sécurité : Es-tu sûr de vouloir marquer tous les élèves de ${classeCible} comme absents ce midi ?`)) {
+            enfantsActifs.forEach(enfant => enfant.masque = true);
             sauvegarderDonnees();
             rafraichirAffichage();
-            alert(`✅ ${compteurAbsents} enfant(s) de ${classeCible} ont été marqués comme absents.`);
+        }
+    } else {
+        // ACTION : RESTAURER (Si tout le monde est déjà masqué)
+        let enfantsMasques = enfantsDeLaClasse.filter(e => e.masque);
+        if (enfantsMasques.length > 0) {
+            if (confirm(`Veux-tu réintégrer tous les élèves absents de ${classeCible} ?`)) {
+                enfantsMasques.forEach(enfant => enfant.masque = false);
+                sauvegarderDonnees();
+                rafraichirAffichage();
+            }
         } else {
-            alert(`ℹ️ Aucun enfant de ${classeCible} à absenter (ils sont déjà pointés ou déjà absents).`);
+            alert(`ℹ️ Aucun enfant de ${classeCible} dans la liste d'aujourd'hui.`);
         }
     }
 }
@@ -627,6 +672,7 @@ function mettreAJourCompteursFiltres() {
         }
     });
 
+    // Mise à jour du texte des boutons de filtres
     document.getElementById('btn-filtre-cpa').innerText = `CPA (${compteurs["CPA"]})`;
     document.getElementById('btn-filtre-cpb').innerText = `CPB (${compteurs["CPB"]})`;
     document.getElementById('btn-filtre-ce1').innerText = `CE1 (${compteurs["CE1"]})`;
@@ -634,4 +680,24 @@ function mettreAJourCompteursFiltres() {
     document.getElementById('btn-filtre-cm1').innerText = `CM1 (${compteurs["CM1"]})`;
     document.getElementById('btn-filtre-cm2').innerText = `CM2 (${compteurs["CM2"]})`;
     document.getElementById('btn-filtre-tous').innerText = `Voir Tous (${totalEnAttente})`;
+
+    // Mise à jour visuelle des boutons d'Absence/Restauration
+    let classesList = ["CPA", "CPB", "CE1", "CE2", "CM1", "CM2"];
+    classesList.forEach(classe => {
+        let btnAction = document.getElementById(`btn-action-${classe.toLowerCase()}`);
+        if (btnAction) {
+            let enfantsDeLaClasse = baseEnfants.filter(e => e.classe === classe && !e.aMange);
+            let enfantsActifs = enfantsDeLaClasse.filter(e => !e.masque);
+            
+            if (enfantsDeLaClasse.length > 0 && enfantsActifs.length === 0) {
+                // Tout le groupe est masqué -> Le bouton devient vert et propose de restaurer
+                btnAction.innerText = `✅ Restaurer ${classe}`;
+                btnAction.style.backgroundColor = "#28a745"; 
+            } else {
+                // Comportement normal -> Le bouton reste rouge et propose d'absenter
+                btnAction.innerText = `🚫 Absenter ${classe}`;
+                btnAction.style.backgroundColor = "#dc3545"; 
+            }
+        }
+    });
 }
