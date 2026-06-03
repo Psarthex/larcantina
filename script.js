@@ -439,8 +439,8 @@ function importerCSV(event) {
 
             // --- ⚠️ MODE TEST WEEK-END ---
             // LUNDI : N'oublie pas de remettre let jourActuel = new Date().getDay();
-            let jourActuel = 5; 
-            //let jourActuel = new Date().getDay()
+            //let jourActuel = 5; 
+            let jourActuel = new Date().getDay()
 
             const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
             let nomDuJour = nomsJours[jourActuel] || "ce jour";
