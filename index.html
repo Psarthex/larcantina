@@ -81,42 +81,42 @@
         </div>
 
 <div class="zone-import">
-        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 18px;">⚙️ Mise à jour de la liste</h3>
+        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 18px;">⚙️ Gestion et Mise à jour</h3>
         
         <input type="file" id="fichier-csv" accept=".csv, .xls, .xml" onchange="importerCSV(event)" style="display: none;">
-        
         <label for="fichier-csv" class="btn-import">
             📂 Parcourir et choisir le fichier
         </label>
-
         <p style="font-size: 14px; margin-top: 15px; margin-bottom: 0; opacity: 0.8;">Format attendu : Fichier CSV/XLS</p>
 
-      <div style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px;">
-        <button onclick="reinitialiserJournee()" class="btn-large-reset">
-            Nouvelle journée (Effacer tous les pointages)
-        </button>
-        
-    </div>     
-    <div style="margin-top: 20px; border-top: 2px solid #ccc; padding-top: 20px;"></div>
-        <button onclick="ouvrirModalAjout()" style="background-color: #17a2b8; color: white; border: none; border-radius: 6px; padding: 10px 15px; cursor: pointer; font-weight: bold; font-size: 16px; margin-bottom: 15px; width: 100%;">
-        ➕ Ajouter un enfant imprévu
-        </button>
-    </div>
+        <div style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px;">
+            <button onclick="reinitialiserJournee()" class="btn-large-reset">
+                Nouvelle journée (Effacer tous les pointages)
+            </button>
+        </div>     
 
-    <div id="zone-actions-rapides" style="margin-bottom: 20px; display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
-        <button id="btn-action-cpa" onclick="gererAbsenceClasse('CPA')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CPA</button>
-        <button id="btn-action-cpb" onclick="gererAbsenceClasse('CPB')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CPB</button>
-        <button id="btn-action-ce1" onclick="gererAbsenceClasse('CE1')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CE1</button>
-        <button id="btn-action-ce2" onclick="gererAbsenceClasse('CE2')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CE2</button>
-        <button id="btn-action-cm1" onclick="gererAbsenceClasse('CM1')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CM1</button>
-        <button id="btn-action-cm2" onclick="gererAbsenceClasse('CM2')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CM2</button>
-    </div>
+        <div style="margin-top: 20px; border-top: 2px solid #ccc; padding-top: 20px;">
+            <button onclick="ouvrirModalAjout()" style="background-color: #17a2b8; color: white; border: none; border-radius: 6px; padding: 10px 15px; cursor: pointer; font-weight: bold; font-size: 16px; width: 100%;">
+                ➕ Ajouter un enfant imprévu
+            </button>
+                    <div style="margin-top: 30px; border-top: 2px solid #ccc; padding-top: 20px;">
+            <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">🚫 Absenter / Restaurer un groupe</h4>
+            <div id="zone-actions-rapides" style="display: flex; gap: 5px; flex-wrap: wrap; justify-content: center;">
+                <button id="btn-action-cpa" onclick="gererAbsenceClasse('CPA')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CPA</button>
+                <button id="btn-action-cpb" onclick="gererAbsenceClasse('CPB')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CPB</button>
+                <button id="btn-action-ce1" onclick="gererAbsenceClasse('CE1')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CE1</button>
+                <button id="btn-action-ce2" onclick="gererAbsenceClasse('CE2')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CE2</button>
+                <button id="btn-action-cm1" onclick="gererAbsenceClasse('CM1')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CM1</button>
+                <button id="btn-action-cm2" onclick="gererAbsenceClasse('CM2')" style="background-color: #dc3545; color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;">⚠️ Absenter CM2</button>
+            </div>
+        </div>
+        </div>
     </div>
 
     <script src="script.js?v=1"></script>
 
     <div class="signature-footer">
-        Développé pour le périscolaire de Kilstett par Mikaël | Version 0.5
+        Développé pour le périscolaire de Kilstett par Mikaël | Version 1.0 - 2026
     </div>
     <div id="modal-ajout" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;">
         <div class="boite-modale" style="padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
