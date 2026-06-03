@@ -213,19 +213,19 @@ let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
             ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 8px; font-size: 16px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 12px 20px; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;" title="Retirer de la liste">Absent</button>` 
             : "";
             
-        // Structure de la carte : L'info à gauche, les boutons gros et centrés à droite
+        // Structure de la carte : Typographie agrandie pour une lecture instantanée
         div.innerHTML = `
             <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 10px 0; display: flex; flex-direction: column; justify-content: center;">
-                <span style="font-size: 16px;"><strong>${enfant.prenom} ${enfant.nom}</strong> <span style="font-size: 14px; opacity: 0.8;">(${enfant.classe})</span></span>
+                <span style="font-size: 20px;"><strong>${enfant.prenom} ${enfant.nom}</strong> <span style="font-size: 18px; opacity: 0.8;">(${enfant.classe})</span></span>
                 ${infoService}
             </div>
             <div class="zone-outils-carte" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; padding: 12px 20px; color: inherit; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;">
+                <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; padding: 12px 20px; color: #ffffff; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;">
                     ${texteAction}
                 </button>
                 ${boutonPoubelle}
             </div>
-        `;      
+        `;
         listeHTML.appendChild(div);
     });
 

@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="Cantine">
-    <link rel="stylesheet" href="style.css?v=0.6">
+    <link rel="stylesheet" href="style.css?v=1">
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -23,11 +23,13 @@
     </div>
 
 <div class="header">
-        <h1 style="margin: 0; font-size: 24px;">Arcantina: Pointage</h1>
+        <h1 style="margin: 0; font-size: 26px; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 32px;">🍱</span> Arcantina
+        </h1>
         
-        <div style="text-align: center;">
-            <h2 id="compteur" style="margin: 0;">Repas : 0 / 0</h2>
-            <div id="message-fin" style="margin-top: 5px; font-weight: bold; font-size: 18px;"></div>
+        <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+            <div id="compteur" class="badge-compteur">Repas : 0 / 0</div>
+            <div id="message-fin" style="margin-top: 5px; font-weight: bold; font-size: 16px;"></div>
         </div>
 
         <div></div>
@@ -111,7 +113,7 @@
     </div>
     </div>
 
-    <script src="script.js?v=0.6"></script>
+    <script src="script.js?v=1"></script>
 
     <div class="signature-footer">
         Développé pour le périscolaire de Kilstett par Mikaël | Version 0.5
