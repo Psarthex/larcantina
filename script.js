@@ -317,13 +317,13 @@ function mettreAJourCompteur() {
 
     // 6. Mise à jour visuelle des boutons de filtres (Mode Vérification)
     let fServ1 = document.getElementById("f-serv-1");
-    if (fServ1) fServ1.innerText = `Service 1 (${compteursService[1]})`;
+    if (fServ1) fServ1.innerText = `🍽️ 1er Service (${compteursService[1]})`;
     
     let fServ2 = document.getElementById("f-serv-2");
-    if (fServ2) fServ2.innerText = `Service 2 (${compteursService[2]})`;
+    if (fServ2) fServ2.innerText = `🍽️ 2ème Service (${compteursService[2]})`;
     
     let fServ3 = document.getElementById("f-serv-3");
-    if (fServ3) fServ3.innerText = `Service 3 (${compteursService[3]})`;
+    if (fServ3) fServ3.innerText = `🍽️ 3ème Service (${compteursService[3]})`;
 }
 
 function basculerTheme() {

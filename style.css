@@ -277,9 +277,9 @@ body.dark-mode .zone-import {
     box-shadow: 0 2px 4px rgba(255,255,255,0.05);
 }
 
-/* Le design de notre nouveau bouton d'importation */
+/* Le design bouton d'importation */
 .btn-import {
-    background-color: #1a73e8; /* Le même bleu pro que tes filtres */
+    background-color: #1a73e8;
     color: white;
     padding: 12px 25px;
     border-radius: 5px;
