@@ -219,6 +219,9 @@ body.dark-mode .enfant-carte.pointe small {
 /* =========================================
    10. ADAPTATION MOBILES (Smartphones & Petites Tablettes)
    ========================================= */
+/* =========================================
+   10. ADAPTATION MOBILES (Smartphones & Petites Tablettes)
+   ========================================= */
 @media (max-width: 768px) {
     /* L'en-tête passe sur une seule colonne centrée */
     .header {
@@ -248,16 +251,25 @@ body.dark-mode .enfant-carte.pointe small {
         margin-bottom: 5px;
     }
     
-    /* On réduit légèrement la taille des cartes pour gagner de la place */
+    /* On réorganise la carte enfant pour le mobile */
     .enfant-carte {
         font-size: 16px;
         padding: 15px;
-        flex-direction: column; /* Le bouton d'action passe sous le nom */
-        gap: 10px;
+        flex-direction: column; /* Le nom passe au-dessus des boutons */
+        gap: 15px; /* Espace vertical entre le texte et les boutons */
+        text-align: center; /* Centre le texte globalement */
     }
     
-    .enfant-carte span:last-child {
-        text-align: right;
+    /* Centrage forcé de la zone de texte */
+    .enfant-carte .zone-clic-info {
+        align-items: center !important;
+        text-align: center !important;
+    }
+
+    /* Espacement forcé entre les boutons d'action */
+    .enfant-carte .zone-outils-carte {
+        gap: 20px !important; 
+        justify-content: center !important;
     }
 }
 /* =========================================
