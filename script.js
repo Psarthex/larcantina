@@ -208,22 +208,24 @@ let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
         let couleurFond = modeAttente ? "#009222" : "#ff0000"; 
 
         // La poubelle n'est générée que si on est en mode "Attente" (liste de base)
+        // Le bouton d'absence : hitboxes agrandies (padding 12px 20px) et texte centré
         let boutonPoubelle = modeAttente 
-            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 6px; font-size: 14px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 6px 12px; transition: 0.2s;" title="Retirer de la liste">Absent(e)</button>` 
+            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 8px; font-size: 16px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 12px 20px; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;" title="Retirer de la liste">Absent</button>` 
             : "";
             
-        // Structure scindée : Boutons bien séparés et mis en évidence
+        // Structure de la carte : L'info à gauche, les boutons gros et centrés à droite
         div.innerHTML = `
-            <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 5px 0;">
-                <strong>${enfant.prenom} ${enfant.nom}</strong> (${enfant.classe}) ${infoService}
+            <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 10px 0; display: flex; flex-direction: column; justify-content: center;">
+                <span style="font-size: 16px;"><strong>${enfant.prenom} ${enfant.nom}</strong> <span style="font-size: 14px; opacity: 0.8;">(${enfant.classe})</span></span>
+                ${infoService}
             </div>
-            <div class="zone-outils-carte" style="display: flex; align-items: center; gap: 120px;">
-                <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; padding: 6px 12px; color: inherit; transition: 0.2s;">
+            <div class="zone-outils-carte" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; padding: 12px 20px; color: inherit; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;">
                     ${texteAction}
                 </button>
                 ${boutonPoubelle}
             </div>
-        `;        
+        `;      
         listeHTML.appendChild(div);
     });
 
@@ -437,8 +439,8 @@ function importerCSV(event) {
 
             // --- ⚠️ MODE TEST WEEK-END ---
             // LUNDI : N'oublie pas de remettre let jourActuel = new Date().getDay();
-            //let jourActuel = 5; 
-            let jourActuel = new Date().getDay()
+            let jourActuel = 5; 
+            //let jourActuel = new Date().getDay()
 
             const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
             let nomDuJour = nomsJours[jourActuel] || "ce jour";
@@ -750,7 +752,7 @@ function mettreAJourCompteursFiltres() {
                 btnAction.style.backgroundColor = "#28a745"; 
             } else {
                 // Comportement normal -> Le bouton reste rouge et propose d'absenter
-                btnAction.innerText = `🚫 Absenter ${classe}`;
+                btnAction.innerText = `⚠️ Absenter ${classe}`;
                 btnAction.style.backgroundColor = "#dc3545"; 
             }
         }
