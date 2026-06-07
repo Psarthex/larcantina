@@ -2,7 +2,7 @@
 // VARIABLES GLOBALES & CONFIGURATION DE LA SEMAINE
 // =========================================================================
 // INTERRUPTEUR DE TEST : Passer à false avant de retourner au périscolaire
-const MODE_TEST_WEEKEND = true;
+const MODE_TEST_WEEKEND = false;
 let baseSemaine = []; // Stocke l'export complet du fichier (Tous les jours)
 let baseEnfants = []; // Stocke uniquement la liste générée pour le jour J
 let filtresClasses = []; 
