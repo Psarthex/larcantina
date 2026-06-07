@@ -361,3 +361,13 @@ body.dark-mode .boite-modale select {
     color: #ffffff;
     border: 1px solid #666;
 }
+
+/* Agrandissement de la police pour le récapitulatif des enfants pointés */
+.liste-pointes-recap, .enfant-statut-verif {
+    font-size: 20px !important;
+    line-height: 1.6;
+}
+
+.enfant-statut-verif strong {
+    font-size: 21px;
+}

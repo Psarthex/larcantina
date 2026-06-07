@@ -12,20 +12,113 @@ let limiteAffichage = 20; // Nombre d'enfants affichés par défaut
 
 
 function chargerDonnees() {
-    let sauvegardeSemaine = localStorage.getItem('sauvegardeSemaineCantine');
     let sauvegardeJour = localStorage.getItem('sauvegardeCantine');
-    
-    if (sauvegardeSemaine) {
-        baseSemaine = JSON.parse(sauvegardeSemaine);
-    } else {
-        baseSemaine = [];
+    let donneesBrutes = localStorage.getItem('donneesExcelBrutes');
+    let jourSauvegarde = parseInt(localStorage.getItem('jourDernierImport'));
+    let dateImport = parseInt(localStorage.getItem('dateImportExcel'));
+    let jourActuel = new Date().getDay();
+    let maintenant = new Date().getTime();
+
+    // Sécurité : Si le fichier a plus de 6 jours, on le supprime (nouvelle semaine)
+    if (dateImport && (maintenant - dateImport > 6 * 24 * 60 * 60 * 1000)) {
+        localStorage.removeItem('donneesExcelBrutes');
+        donneesBrutes = null;
     }
 
-    if (sauvegardeJour) {
+    if (donneesBrutes && !isNaN(jourSauvegarde) && jourSauvegarde !== jourActuel) {
+        // LE JOUR A CHANGÉ : On relance le radar automatiquement
+        let lignes = JSON.parse(donneesBrutes);
+        if (jourActuel >= 1 && jourActuel <= 5) {
+            if (genererListeDuJour(lignes, jourActuel)) {
+                alert(`📅 Nouveau jour détecté ! La liste d'aujourd'hui a été générée automatiquement.`);
+            } else {
+                baseEnfants = []; 
+            }
+        } else {
+            baseEnfants = []; // On vide la liste le week-end
+        }
+    } else if (sauvegardeJour) {
+        // MÊME JOUR : On recharge simplement les pointages en cours
         baseEnfants = JSON.parse(sauvegardeJour);
     } else {
         baseEnfants = []; 
     }
+}
+
+// Fonction centrale qui extrait les données du jour demandé
+function genererListeDuJour(lignes, jourCible) {
+    let nouvelleBase = [];
+    let idCompteur = 1;
+    let ordreClasses = ["CPB", "CE1", "CM1", "CM2", "CE2", "CPA"];
+    let indexGroupeCourant = -1; 
+    
+    const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
+    let nomDuJour = nomsJours[jourCible] || "ce jour";
+
+    let indexColonneMidi = trouverColonneCantine(lignes, jourCible);
+    if (indexColonneMidi === -1) return false;
+
+    let totalAttendu = 0;
+    for (let i = lignes.length - 1; i >= 0; i--) {
+        if (lignes[i] && lignes[i][indexColonneMidi] !== undefined) {
+            let val = String(lignes[i][indexColonneMidi]).trim();
+            let num = parseInt(val, 10);
+            if (!isNaN(num) && num > 0 && val === String(num)) {
+                totalAttendu = num;
+                break;
+            }
+        }
+    }
+
+    for (let i = 0; i < lignes.length; i++) {
+        let ligne = lignes[i];
+        if (!ligne || ligne.length === 0) continue;
+        let texteLigne = ligne.join(" ").toLowerCase();
+
+        if (texteLigne.includes("inscrits") && (texteLigne.includes("régime") || texteLigne.includes("allergies"))) {
+            indexGroupeCourant++; continue; 
+        }
+        if (indexGroupeCourant === -1) continue;
+
+        let identiteBrute = "";
+        for (let c = 0; c <= 3; c++) {
+            if (ligne[c] && String(ligne[c]).trim().length > 2) {
+                identiteBrute = String(ligne[c]).trim(); break;
+            }
+        }
+
+        if (identiteBrute === "" || identiteBrute.toLowerCase().includes("total") || identiteBrute.toLowerCase().includes("aucun")) continue;
+
+        let estPrevuCeMidi = false;
+        if (ligne[indexColonneMidi] !== undefined && ligne[indexColonneMidi] !== null) {
+            let valeurCase = String(ligne[indexColonneMidi]).toUpperCase().trim();
+            if (["X", "V", "1", "OUI", "O", "AJ"].includes(valeurCase)) estPrevuCeMidi = true;
+        }
+
+        if (estPrevuCeMidi) {
+            let mots = identiteBrute.split(" ");
+            nouvelleBase.push({
+                id: idCompteur++,
+                nom: mots[0] || "Inconnu",
+                prenom: mots.slice(1).join(" ") || "",
+                classe: ordreClasses[indexGroupeCourant] || "Non précisée", 
+                aMange: false, service: null, heurePointage: null, heureSortie: null, masque: false
+            });
+        }
+    }
+
+    if (totalAttendu > 0 && nouvelleBase.length !== totalAttendu) {
+        alert(`⚠️ SÉCURITÉ : L'extraction de ${nomDuJour} a échoué.\nAttendu : ${totalAttendu} / Trouvé : ${nouvelleBase.length}.`);
+        return false; 
+    }
+
+    if (nouvelleBase.length > 0) {
+        baseEnfants = nouvelleBase;
+        localStorage.setItem('sauvegardeCantine', JSON.stringify(baseEnfants));
+        localStorage.setItem('jourDernierImport', jourCible);
+        return true;
+    }
+    return false;
 }
 
 function sauvegarderDonnees() {
@@ -36,9 +129,10 @@ function sauvegarderDonnees() {
 }
 
 function reinitialiserJournee() {
-    let reponse = prompt("⚠️ ATTENTION : Cela va remettre à zéro tous les pointages d'aujourd'hui.\nPour confirmer, tapez 'effacer' :");
+    let reponse = prompt("⚠️ ATTENTION : Cela va annuler tous les pointages d'aujourd'hui (dépointage total).\nPour confirmer, tapez 'effacer' :");
 
     if (reponse !== null && reponse.toLowerCase().trim() === "effacer") {
+        // On remet tous les statuts à zéro sans toucher à la présence de l'enfant dans la liste
         baseEnfants.forEach(enfant => {
             enfant.aMange = false;
             enfant.service = null;
@@ -49,9 +143,9 @@ function reinitialiserJournee() {
         sauvegarderDonnees(); 
         changerService(1); 
         rafraichirAffichage(); 
-        alert("✅ Pointages réinitialisés ! La liste des enfants est conservée pour la prochaine journée.");
+        alert("✅ Pointages annulés ! La liste des enfants d'aujourd'hui est conservée et remise à zéro.");
     } else if (reponse !== null) {
-        alert("❌ Le mot de sécurité est incorrect. L'effacement a été annulé.");
+        alert("❌ Le mot de sécurité est incorrect. L'annulation a été bloquée.");
     }
 }
 
@@ -207,25 +301,25 @@ let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
         let couleurBordure = modeAttente ? "#009222" : "#ff0000"; 
         let couleurFond = modeAttente ? "#009222" : "#ff0000"; 
 
-        // La poubelle n'est générée que si on est en mode "Attente" (liste de base)
-        // Le bouton d'absence : hitboxes agrandies (padding 12px 20px) et texte centré
+        // Le bouton d'absence élargi horizontalement (flex: 1)
         let boutonPoubelle = modeAttente 
-            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 8px; font-size: 16px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 12px 20px; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;" title="Retirer de la liste">Absent</button>` 
+            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 10px; font-size: 20px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 15px 10px; flex: 1; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;" title="Retirer de la liste">Absent</button>` 
             : "";
             
-        // Structure de la carte : Typographie agrandie pour une lecture instantanée
+        // Structure de la carte : Container à 100% de largeur et boutons étirés
         div.innerHTML = `
             <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 10px 0; display: flex; flex-direction: column; justify-content: center;">
                 <span style="font-size: 20px;"><strong>${enfant.prenom} ${enfant.nom}</strong> <span style="font-size: 18px; opacity: 0.8;">(${enfant.classe})</span></span>
                 ${infoService}
             </div>
-            <div class="zone-outils-carte" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
-                <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; padding: 12px 20px; color: #ffffff; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;">
+            <div class="zone-outils-carte" style="display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%;">
+                <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; padding: 15px 10px; flex: 1; color: #ffffff; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;">
                     ${texteAction}
                 </button>
                 ${boutonPoubelle}
             </div>
         `;
+
         listeHTML.appendChild(div);
     });
 
@@ -418,130 +512,33 @@ function trouverColonneCantine(lignesExcel, jourCible) {
 function importerCSV(event) {
     let fichier = event.target.files[0];
     if (!fichier) return;
-
     let lecteur = new FileReader();
 
     lecteur.onload = function(e) {
         let data = new Uint8Array(e.target.result);
-
         try {
             let classeur = XLSX.read(data, {type: 'array'});
             let feuille = classeur.Sheets[classeur.SheetNames[0]];
             let lignes = XLSX.utils.sheet_to_json(feuille, {header: 1});
 
-            let nouvelleBase = [];
-            let idCompteur = 1;
+            // On sauvegarde le fichier entier "en arrière-plan" avec un horodatage
+            localStorage.setItem('donneesExcelBrutes', JSON.stringify(lignes));
+            localStorage.setItem('dateImportExcel', new Date().getTime());
             
-            // --- ⚙️ CONFIGURATION DES CLASSES ---
-            // L'ordre exact d'apparition des groupes dans le fichier d'export
-            let ordreClasses = ["CPB", "CE1", "CM1", "CM2", "CE2", "CPA"];
-            let indexGroupeCourant = -1; 
-
-            // --- ⚠️ MODE TEST WEEK-END ---
-            // LUNDI : N'oublie pas de remettre let jourActuel = new Date().getDay();
-            //let jourActuel = 5; 
-            let jourActuel = new Date().getDay()
-
-            const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
-            let nomDuJour = nomsJours[jourActuel] || "ce jour";
-
-            let indexColonneMidi = trouverColonneCantine(lignes, jourActuel);
-
-            if (indexColonneMidi === -1) {
-                alert(`❌ Le radar n'a pas trouvé la colonne du repas pour ${nomDuJour}.`);
-                return;
-            }
-
-            let totalAttendu = 0;
-            for (let i = lignes.length - 1; i >= 0; i--) {
-                if (lignes[i] && lignes[i][indexColonneMidi] !== undefined) {
-                    let val = String(lignes[i][indexColonneMidi]).trim();
-                    let num = parseInt(val, 10);
-                    if (!isNaN(num) && num > 0 && val === String(num)) {
-                        totalAttendu = num;
-                        break;
-                    }
-                }
-            }
-
-            for (let i = 0; i < lignes.length; i++) {
-                let ligne = lignes[i];
-                if (!ligne || ligne.length === 0) continue;
-
-                let texteLigne = ligne.join(" ").toLowerCase();
-
-                // DÉTECTION DU GROUPE : Dès qu'on voit l'en-tête, on passe à la classe suivante
-                if (texteLigne.includes("inscrits") && (texteLigne.includes("régime") || texteLigne.includes("allergies"))) {
-                    indexGroupeCourant++;
-                    continue; 
-                }
-
-                if (indexGroupeCourant === -1) continue;
-
-                let identiteBrute = "";
-                for (let c = 0; c <= 3; c++) {
-                    if (ligne[c] && String(ligne[c]).trim().length > 2) {
-                        identiteBrute = String(ligne[c]).trim();
-                        break;
-                    }
-                }
-
-                if (identiteBrute === "") continue;
-                if (identiteBrute.toLowerCase().includes("total") || identiteBrute.toLowerCase().includes("aucun")) continue;
-
-                let estPrevuCeMidi = false;
-                
-                if (ligne[indexColonneMidi] !== undefined && ligne[indexColonneMidi] !== null) {
-                    let valeurCase = String(ligne[indexColonneMidi]).toUpperCase().trim();
-                    if (valeurCase === "X" || valeurCase === "V" || valeurCase === "1" || valeurCase === "OUI" || valeurCase === "O" || valeurCase === "AJ") {
-                        estPrevuCeMidi = true;
-                    }
-                }
-
-                if (estPrevuCeMidi) {
-                    let mots = identiteBrute.split(" ");
-                    let nom = mots[0] || "Inconnu";
-                    let prenom = mots.slice(1).join(" ") || "";
-
-                    // ATTRIBUTION AUTOMATIQUE DE LA CLASSE selon le nouvel ordre
-                    let classeAttribuee = ordreClasses[indexGroupeCourant] || "Non précisée";
-
-                    nouvelleBase.push({
-                        id: idCompteur++,
-                        nom: nom,
-                        prenom: prenom,
-                        classe: classeAttribuee, 
-                        aMange: false,
-                        service: null,
-                        heurePointage: null,
-                        heureSortie: null,
-                        masque: false
-                    });
-                }
-            }
-
-            if (totalAttendu > 0 && nouvelleBase.length !== totalAttendu) {
-                alert(`❌ ALERTE DE SÉCURITÉ :\nLe fichier indique un total de ${totalAttendu} enfants prévus pour le repas de ${nomDuJour}, mais l'application en a détecté ${nouvelleBase.length}.\n\nL'importation a été bloquée pour éviter toute erreur de pointage.`);
-                document.getElementById("fichier-csv").value = "";
-                return; 
-            }
-
-            if (nouvelleBase.length > 0) {
-                baseEnfants = nouvelleBase;
-                sauvegarderDonnees();
+            let jourActuel = new Date().getDay();
+            
+            if (genererListeDuJour(lignes, jourActuel)) {
                 rafraichirAffichage();
-                document.getElementById("fichier-csv").value = "";
-                alert(`✅ Importation sécurisée réussie !\nLe radar a détecté les ${nouvelleBase.length} enfants prévus pour le repas de ${nomDuJour}, et a trié les classes automatiquement.`);
+                alert(`✅ Fichier de la semaine enregistré !\nLa liste d'aujourd'hui a été générée avec succès.`);
             } else {
-                alert(`❌ Aucun enfant trouvé pour le repas de ${nomDuJour}.`);
+                alert(`✅ Fichier de la semaine enregistré.\n(Aucun repas détecté pour aujourd'hui)`);
             }
-
+            document.getElementById("fichier-csv").value = "";
         } catch (erreur) {
             console.error(erreur);
-            alert("❌ Erreur : Impossible d'analyser le fichier.");
+            alert("❌ Erreur lors de la lecture du fichier.");
         }
     };
-
     lecteur.readAsArrayBuffer(fichier);
 }
 
