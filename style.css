@@ -371,3 +371,26 @@ body.dark-mode .boite-modale select {
 .enfant-statut-verif strong {
     font-size: 21px;
 }
+
+/* =========================================
+   13. BOUTONS D'ACTION (RESPONSIVE)
+   ========================================= */
+
+/* Format standard (PC / Grande Tablette) : Taille raisonnable et alignement à droite */
+.btn-action-carte {
+    padding: 12px 25px;
+    min-width: 140px;
+}
+
+/* Format Mobile : Écrasement des règles pour s'étirer sur toute la largeur */
+@media (max-width: 768px) {
+    .zone-outils-carte {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    
+    .btn-action-carte {
+        flex: 1 !important; /* Force le bouton à prendre 50% de l'espace */
+        padding: 15px 10px !important;
+    }
+}

@@ -1,6 +1,8 @@
 // =========================================================================
 // VARIABLES GLOBALES & CONFIGURATION DE LA SEMAINE
 // =========================================================================
+// INTERRUPTEUR DE TEST : Passer à false avant de retourner au périscolaire
+const MODE_TEST_WEEKEND = true;
 let baseSemaine = []; // Stocke l'export complet du fichier (Tous les jours)
 let baseEnfants = []; // Stocke uniquement la liste générée pour le jour J
 let filtresClasses = []; 
@@ -18,6 +20,11 @@ function chargerDonnees() {
     let dateImport = parseInt(localStorage.getItem('dateImportExcel'));
     let jourActuel = new Date().getDay();
     let maintenant = new Date().getTime();
+    // --- MODE TEST ---
+    if (MODE_TEST_WEEKEND && (jourActuel === 0 || jourActuel === 6)) {
+        jourActuel = 4; // Force l'application à charger la colonne du Jeudi
+    }
+    // -----------------
 
     // Sécurité : Si le fichier a plus de 6 jours, on le supprime (nouvelle semaine)
     if (dateImport && (maintenant - dateImport > 6 * 24 * 60 * 60 * 1000)) {
@@ -290,30 +297,30 @@ let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
         let div = document.createElement("div");
         div.className = modeAttente ? "enfant-carte" : "enfant-carte pointe";
         
-        let texteAction = modeAttente ? "Pointer" : "Annuler";
-        
         let infoService = "";
         if (!modeAttente && enfant.service !== null) {
             infoService = `<br><small>Service ${enfant.service} - Entrée : ${enfant.heurePointage} (Sortie vers ${enfant.heureSortie})</small>`;
         }
-        
-        // Définition des couleurs dynamiques pour le bouton Pointer/Annuler
-        let couleurBordure = modeAttente ? "#009222" : "#ff0000"; 
-        let couleurFond = modeAttente ? "#009222" : "#ff0000"; 
 
-        // Le bouton d'absence élargi horizontalement (flex: 1)
+        // --- VARIABLES DE STYLE DU BOUTON (Unifiées) ---
+        // Si on est en mode attente, le bouton est Vert ("Pointer"). Sinon, il est Gris ("Annuler").
+        let texteAction = modeAttente ? "Pointer" : "Annuler";
+        let couleurFond = modeAttente ? "#28a745" : "#6c757d"; 
+        let couleurBordure = modeAttente ? "#218838" : "#5a6268";
+
+        // Le bouton d'absence avec sa nouvelle classe CSS
         let boutonPoubelle = modeAttente 
-            ? `<button onclick="supprimerEnfant(${enfant.id})" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 10px; font-size: 20px; font-weight: bold; color: #ffffff; cursor: pointer; padding: 15px 10px; flex: 1; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;" title="Retirer de la liste">Absent</button>` 
+            ? `<button onclick="supprimerEnfant(${enfant.id})" class="btn-action-carte" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 10px; font-size: 20px; font-weight: bold; color: #ffffff; cursor: pointer; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;" title="Retirer de la liste">Absent</button>` 
             : "";
             
-        // Structure de la carte : Container à 100% de largeur et boutons étirés
+        // Structure de la carte : les outils s'alignent naturellement à droite (flex-end)
         div.innerHTML = `
             <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 10px 0; display: flex; flex-direction: column; justify-content: center;">
                 <span style="font-size: 20px;"><strong>${enfant.prenom} ${enfant.nom}</strong> <span style="font-size: 18px; opacity: 0.8;">(${enfant.classe})</span></span>
                 ${infoService}
             </div>
-            <div class="zone-outils-carte" style="display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%;">
-                <button onclick="inverserStatutEnfant(${enfant.id})" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; padding: 15px 10px; flex: 1; color: #ffffff; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;">
+            <div class="zone-outils-carte" style="display: flex; align-items: center; justify-content: flex-end; gap: 15px;">
+                <button onclick="inverserStatutEnfant(${enfant.id})" class="btn-action-carte" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; color: #ffffff; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;">
                     ${texteAction}
                 </button>
                 ${boutonPoubelle}
@@ -526,6 +533,11 @@ function importerCSV(event) {
             localStorage.setItem('dateImportExcel', new Date().getTime());
             
             let jourActuel = new Date().getDay();
+            // --- MODE TEST ---
+            if (MODE_TEST_WEEKEND && (jourActuel === 0 || jourActuel === 6)) {
+                jourActuel = 4; // Force l'application à lire la colonne du Jeudi
+            }
+            // -----------------
             
             if (genererListeDuJour(lignes, jourActuel)) {
                 rafraichirAffichage();
@@ -535,8 +547,8 @@ function importerCSV(event) {
             }
             document.getElementById("fichier-csv").value = "";
         } catch (erreur) {
-            console.error(erreur);
-            alert("❌ Erreur lors de la lecture du fichier.");
+            console.error("Détail du crash :", erreur);
+            alert("❌ Crash de lecture : " + erreur.message);
         }
     };
     lecteur.readAsArrayBuffer(fichier);
