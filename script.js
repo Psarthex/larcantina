@@ -99,7 +99,7 @@ function genererListeDuJour(lignes, jourCible) {
         let estPrevuCeMidi = false;
         if (ligne[indexColonneMidi] !== undefined && ligne[indexColonneMidi] !== null) {
             let valeurCase = String(ligne[indexColonneMidi]).toUpperCase().trim();
-            if (["X", "V", "1", "OUI", "O", "AJ"].includes(valeurCase)) estPrevuCeMidi = true;
+            if (["X", "V", "1", "OUI", "O"].includes(valeurCase)) estPrevuCeMidi = true;
         }
 
         if (estPrevuCeMidi) {
@@ -114,9 +114,9 @@ function genererListeDuJour(lignes, jourCible) {
         }
     }
 
-    if (totalAttendu > 0 && nouvelleBase.length !== totalAttendu) {
-        alert(`⚠️ SÉCURITÉ : L'extraction de ${nomDuJour} a échoué.\nAttendu : ${totalAttendu} / Trouvé : ${nouvelleBase.length}.`);
-        return false; 
+if (totalAttendu > 0 && nouvelleBase.length !== totalAttendu) {
+        let forcerChargement = confirm(`⚠️ ANOMALIE DANS LE FICHIER :\nLe document annonce un total de ${totalAttendu} enfants, mais le radar compte ${nouvelleBase.length} cases cochées (possible repas adulte ou ajout non comptabilisé).\n\nVoulez-vous ignorer l'alerte et forcer le chargement de ces ${nouvelleBase.length} enfants ?`);
+        if (!forcerChargement) return false; 
     }
 
     if (nouvelleBase.length > 0) {
