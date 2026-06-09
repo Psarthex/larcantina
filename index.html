@@ -24,7 +24,7 @@
 
 <div class="header">
         <h1 style="margin: 0; font-size: 26px; display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 32px;">🍱</span> Arcantina
+            <span style="font-size: 32px;">🍱</span> Arcantina <span id="jour-en-tete" style="font-size: 20px; font-weight: normal; opacity: 0.8; margin-left: 5px;"></span>
         </h1>
         
         <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
@@ -110,16 +110,17 @@
     <div class="signature-footer">
         Développé pour le périscolaire de Kilstett par Mikaël | Version 1.0 - 2026
     </div>
+    
     <div id="modal-ajout" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center;">
         <div class="boite-modale" style="padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
             <h3 style="margin-top: 0; text-align: center;">Ajouter un imprévu</h3>
             
             <input type="text" id="ajout-prenom" placeholder="Prénom" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
             <input type="text" id="ajout-nom" placeholder="Nom" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            <input type="text" id="ajout-pai" placeholder="Allergie / Régime alimentaire (Optionnel)" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
             
             <select id="ajout-classe" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
                 <option value="Non précisée">Classe non précisée</option>
-                <option value="Maternelle">Maternelle (PS/MS/GS)</option>
                 <option value="CPA">CPA</option>
                 <option value="CPB">CPB</option>
                 <option value="CE1">CE1</option>

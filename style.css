@@ -122,6 +122,12 @@ button:active:not(.actif):not(.actif-service) {
 /* =========================================
    7. CARTES D'ENFANTS
    ========================================= */
+/* Animation d'apparition fluide */
+@keyframes apparitionCarte {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 .enfant-carte {
     background: white;
     padding: 20px;
@@ -132,7 +138,16 @@ button:active:not(.actif):not(.actif-service) {
     justify-content: space-between;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     cursor: pointer;
+    /* Nouvelles règles d'animation */
+    animation: apparitionCarte 0.25s ease-out;
+    transition: transform 0.1s ease, background-color 0.2s ease;
 }
+
+/* Feedback immédiat : la carte et les boutons s'enfoncent au clic */
+.enfant-carte:active, .btn-action-carte:active {
+    transform: scale(0.97);
+}
+
 .enfant-carte:hover {
     background: #f8f9fa;
 }
@@ -148,6 +163,20 @@ button:active:not(.actif):not(.actif-service) {
     color: #495057; 
 }
 
+/* Animations de glissement (Swipe effect) */
+@keyframes glissementGauche {
+    to { transform: translateX(-120%); opacity: 0; }
+}
+@keyframes glissementDroite {
+    to { transform: translateX(120%); opacity: 0; }
+}
+
+.swipe-gauche {
+    animation: glissementGauche 0.3s forwards ease-in !important;
+}
+.swipe-droite {
+    animation: glissementDroite 0.3s forwards ease-in !important;
+}
 /* =========================================
    8. BOUTON NOUVELLE JOURNÉE
    ========================================= */

@@ -12,6 +12,13 @@ let serviceActif = 1;
 let filtreServiceAffichage = 'Tous';
 let limiteAffichage = 20; // Nombre d'enfants affichés par défaut
 
+function mettreAJourJourEnTete(jour) {
+    const nomsJours = { 1: "- Lundi", 2: "- Mardi", 3: "- Mercredi", 4: "- Jeudi", 5: "- Vendredi" };
+    let element = document.getElementById("jour-en-tete");
+    if (element) {
+        element.innerText = nomsJours[jour] ? ` ${nomsJours[jour]}` : "";
+    }
+}
 
 function chargerDonnees() {
     let sauvegardeJour = localStorage.getItem('sauvegardeCantine');
@@ -30,20 +37,28 @@ function chargerDonnees() {
     if (dateImport && (maintenant - dateImport > 6 * 24 * 60 * 60 * 1000)) {
         localStorage.removeItem('donneesExcelBrutes');
         donneesBrutes = null;
-    }
+    // Mise à jour de l'en-tête avec le jour effectif de la liste chargée
+    let jourAffiche = parseInt(localStorage.getItem('jourDernierImport'));
+    mettreAJourJourEnTete(baseEnfants.length > 0 ? jourAffiche : null);
+}
 
-    if (donneesBrutes && !isNaN(jourSauvegarde) && jourSauvegarde !== jourActuel) {
+if (donneesBrutes && !isNaN(jourSauvegarde) && jourSauvegarde !== jourActuel) {
         // LE JOUR A CHANGÉ : On relance le radar automatiquement
         let lignes = JSON.parse(donneesBrutes);
         if (jourActuel >= 1 && jourActuel <= 5) {
             if (genererListeDuJour(lignes, jourActuel)) {
-                alert(`📅 Nouveau jour détecté ! La liste d'aujourd'hui a été générée automatiquement.`);
+                // --- AJOUT DU NOM DU JOUR DANS L'ALERTE ---
+                const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
+                let nomDuJour = nomsJours[jourActuel] || "ce jour";
+                alert(`📅 Nouveau jour détecté ! La liste du ${nomDuJour} a été générée automatiquement.`);
+                // ------------------------------------------
             } else {
                 baseEnfants = []; 
             }
         } else {
             baseEnfants = []; // On vide la liste le week-end
         }
+
     } else if (sauvegardeJour) {
         // MÊME JOUR : On recharge simplement les pointages en cours
         baseEnfants = JSON.parse(sauvegardeJour);
@@ -61,6 +76,22 @@ function genererListeDuJour(lignes, jourCible) {
     
     const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
     let nomDuJour = nomsJours[jourCible] || "ce jour";
+
+// --- RECHERCHE DE LA COLONNE PAI / RÉGIME ---
+    let indexPAI = -1;
+    for (let i = 0; i < 20; i++) {
+        if (!lignes[i]) continue;
+        
+        for (let j = 0; j < lignes[i].length; j++) {
+            let cellule = String(lignes[i][j] || "").toLowerCase().trim();
+            // Ciblage strict et unique sur le mot "allergies"
+            if (cellule.includes("allergies")) {
+                indexPAI = j;
+                break;
+            }
+        }
+        if (indexPAI !== -1) break;
+    }
 
     let indexColonneMidi = trouverColonneCantine(lignes, jourCible);
     if (indexColonneMidi === -1) return false;
@@ -104,11 +135,23 @@ function genererListeDuJour(lignes, jourCible) {
 
         if (estPrevuCeMidi) {
             let mots = identiteBrute.split(" ");
+            
+            // --- EXTRACTION DU PAI ---
+            let infoPAI = "";
+            if (indexPAI !== -1 && ligne[indexPAI]) {
+                let valPAI = String(ligne[indexPAI]).trim();
+                // On exclut les mots parasites
+                if (valPAI.length > 1 && !valPAI.toLowerCase().includes("régime") && valPAI.toLowerCase() !== "non" && valPAI.toLowerCase() !== "aucun") {
+                    infoPAI = valPAI;
+                }
+            }
+
             nouvelleBase.push({
                 id: idCompteur++,
                 nom: mots[0] || "Inconnu",
                 prenom: mots.slice(1).join(" ") || "",
                 classe: ordreClasses[indexGroupeCourant] || "Non précisée", 
+                pai: infoPAI, // <--- AJOUT DU PAI EN LECTURE SEULE
                 aMange: false, service: null, heurePointage: null, heureSortie: null, masque: false
             });
         }
@@ -161,10 +204,23 @@ function supprimerEnfant(id) {
     if (!enfant) return;
 
     if (confirm(`Es-tu sûr de vouloir retirer ${enfant.prenom} ${enfant.nom} de la liste de ce midi ?`)) {
-        // Au lieu de filtrer et d'effacer, on marque l'enfant comme masqué
-        enfant.masque = true;
-        sauvegarderDonnees();
-        rafraichirAffichage();
+        let carte = document.getElementById(`carte-${id}`);
+        
+        if (carte) {
+            carte.classList.add("swipe-droite"); // Déclenche l'animation
+            
+            // On attend la fin de l'animation avant de masquer réellement la donnée
+            setTimeout(() => {
+                enfant.masque = true;
+                sauvegarderDonnees();
+                rafraichirAffichage();
+            }, 250);
+        } else {
+            // Sécurité de secours si la carte n'a pas pu être animée
+            enfant.masque = true;
+            sauvegarderDonnees();
+            rafraichirAffichage();
+        }
     }
 }
 
@@ -190,7 +246,7 @@ function basculerMode() {
         zoneFiltresServices.style.display = "none"; 
     } else {
         btnMode.innerText = "Retour au pointage normal";
-        btnMode.style.backgroundColor = "#17a2b8"; 
+        btnMode.style.backgroundColor = "#1a73e8"; 
         btnMode.style.color = "white";
         zoneServicesSelection.style.display = "none"; 
         zoneFiltresServices.style.display = "flex"; 
@@ -295,6 +351,7 @@ let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
 
     enfantsAAfficher.forEach(enfant => {
         let div = document.createElement("div");
+        div.id = `carte-${enfant.id}`; 
         div.className = modeAttente ? "enfant-carte" : "enfant-carte pointe";
         
         let infoService = "";
@@ -302,24 +359,31 @@ let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
             infoService = `<br><small>Service ${enfant.service} - Entrée : ${enfant.heurePointage} (Sortie vers ${enfant.heureSortie})</small>`;
         }
 
-        // --- VARIABLES DE STYLE DU BOUTON (Unifiées) ---
-        // Si on est en mode attente, le bouton est Vert ("Pointer"). Sinon, il est Gris ("Annuler").
-        let texteAction = modeAttente ? "Pointer" : "Annuler";
-        let couleurFond = modeAttente ? "#28a745" : "#6c757d"; 
-        let couleurBordure = modeAttente ? "#218838" : "#5a6268";
+        // --- NOUVEAU BADGE PAI (Forcé en dessous) ---
+        let badgePAI = enfant.pai
+            ? `<div style="margin-top: 7px; display: flex; align-items: center; white-space: normal;">
+                 <span style="background-color: #dc3545; color: white; font-size: 15px; padding: 6px 12px; border-radius: 12px; font-weight: bold; box-shadow: 0 1px 2px rgba(0,0,0,0.2);">⚠️ PAI : ${enfant.pai}</span>
+               </div>`
+            : "";
 
-        // Le bouton d'absence avec sa nouvelle classe CSS
+        // --- VARIABLES DE STYLE DU BOUTON (Qui manquaient) ---
+        let texteAction = modeAttente ? "Pointer" : "Annuler";
+        let couleurFond = modeAttente ? "#28a745" : "#dc3545"; 
+        let couleurBordure = modeAttente ? "#218838" : "#c82333";
+
         let boutonPoubelle = modeAttente 
             ? `<button onclick="supprimerEnfant(${enfant.id})" class="btn-action-carte" style="background-color: #ff0000; border: 2px solid #ff3d3d; border-radius: 10px; font-size: 20px; font-weight: bold; color: #ffffff; cursor: pointer; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;" title="Retirer de la liste">Absent</button>` 
             : "";
             
-        // Structure de la carte : les outils s'alignent naturellement à droite (flex-end)
         div.innerHTML = `
-            <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 10px 0; display: flex; flex-direction: column; justify-content: center;">
-                <span style="font-size: 20px;"><strong>${enfant.prenom} ${enfant.nom}</strong> <span style="font-size: 18px; opacity: 0.8;">(${enfant.classe})</span></span>
+            <div class="zone-clic-info" onclick="inverserStatutEnfant(${enfant.id})" style="flex-grow: 1; cursor: pointer; padding: 10px 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; min-width: 0;">
+                <span style="font-size: 20px; display: block; width: 100%; white-space: normal; word-wrap: break-word;">
+                    <strong>${enfant.prenom} ${enfant.nom}</strong> <span style="font-size: 18px; opacity: 0.8;">(${enfant.classe})</span>
+                </span>
+                ${badgePAI}
                 ${infoService}
             </div>
-            <div class="zone-outils-carte" style="display: flex; align-items: center; justify-content: flex-end; gap: 15px;">
+            <div class="zone-outils-carte" style="display: flex; align-items: center; justify-content: flex-end; gap: 15px; flex-shrink: 0;">
                 <button onclick="inverserStatutEnfant(${enfant.id})" class="btn-action-carte" style="background-color: ${couleurFond}; border: 2px solid ${couleurBordure}; border-radius: 10px; font-size: 20px; font-weight: bold; cursor: pointer; color: #ffffff; transition: 0.2s; white-space: nowrap; text-align: center; display: flex; align-items: center; justify-content: center;">
                     ${texteAction}
                 </button>
@@ -334,7 +398,7 @@ let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
     if (enfantsFiltres.length > limiteAffichage) {
         let btnPlus = document.createElement("button");
         btnPlus.innerText = "👇 Afficher plus d'enfants 👇";
-        btnPlus.style.cssText = "background-color: #6c757d; color: white; border: none; border-radius: 6px; padding: 12px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-top: 15px; margin-bottom: 20px;";
+        btnPlus.style.cssText = "background-color: #0159a5; color: white; border: none; border-radius: 6px; padding: 12px; font-size: 16px; font-weight: bold; cursor: pointer; width: 100%; box-shadow: 0 2px 4px rgba(0,0,0,0.2); margin-top: 15px; margin-bottom: 20px;";
         
         btnPlus.onclick = function() {
             limiteAffichage += 20; 
@@ -350,33 +414,38 @@ let boutonsClasses = document.querySelectorAll("#boutons-classes .btn-filtre");
 
 function inverserStatutEnfant(idEnfant) {
     let enfant = baseEnfants.find(e => e.id === idEnfant);
-    if (enfant) {
+    let carte = document.getElementById(`carte-${idEnfant}`);
+
+    if (enfant && carte) {
+        // 1. On lance l'animation visuelle selon l'action
         if (!enfant.aMange) {
-            enfant.aMange = true;
-            enfant.service = serviceActif;
-            
-            let maintenant = new Date();
-            enfant.heurePointage = maintenant.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-            
-            let tempsSortie = new Date(maintenant.getTime() + 20 * 60000);
-            enfant.heureSortie = tempsSortie.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
-
+            carte.classList.add("swipe-gauche"); // Pointage -> part à gauche
         } else {
-            childReset(enfant);
+            carte.classList.add("swipe-droite"); // Annulation -> part à droite
         }
-        sauvegarderDonnees(); 
-    }
-    
-    function childReset(e) {
-        e.aMange = false;
-        e.service = null;
-        e.heurePointage = null;
-        e.heureSortie = null;
-    }
 
-    document.getElementById("barre-recherche").value = "";
-    termeRecherche = "";
-    rafraichirAffichage();
+        // 2. On attend la fin de l'animation (300ms) pour faire le calcul
+        setTimeout(() => {
+            if (!enfant.aMange) {
+                enfant.aMange = true;
+                enfant.service = serviceActif;
+                let maintenant = new Date();
+                enfant.heurePointage = maintenant.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+                let tempsSortie = new Date(maintenant.getTime() + 20 * 60000);
+                enfant.heureSortie = tempsSortie.toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'});
+            } else {
+                enfant.aMange = false;
+                enfant.service = null;
+                enfant.heurePointage = null;
+                enfant.heureSortie = null;
+            }
+            sauvegarderDonnees(); 
+            
+            document.getElementById("barre-recherche").value = "";
+            termeRecherche = "";
+            rafraichirAffichage();
+        }, 250); // Le délai doit être légèrement inférieur à l'animation CSS pour plus de fluidité
+    }
 }
 
 function mettreAJourCompteur() {
@@ -541,10 +610,15 @@ function importerCSV(event) {
             
             if (genererListeDuJour(lignes, jourActuel)) {
                 rafraichirAffichage();
-                alert(`✅ Fichier de la semaine enregistré !\nLa liste d'aujourd'hui a été générée avec succès.`);
+                const nomsJours = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi" };
+                let nomDuJour = nomsJours[jourActuel] || "ce jour";
+                alert(`✅ Fichier de la semaine enregistré !\nLa liste du ${nomDuJour} a été générée avec succès.`);
+                mettreAJourJourEnTete(jourActuel); // <--- AJOUT
             } else {
                 alert(`✅ Fichier de la semaine enregistré.\n(Aucun repas détecté pour aujourd'hui)`);
+                mettreAJourJourEnTete(null); // <--- AJOUT
             }
+
             document.getElementById("fichier-csv").value = "";
         } catch (erreur) {
             console.error("Détail du crash :", erreur);
@@ -653,9 +727,9 @@ function ouvrirModalAjout() {
 
 function fermerModalAjout() {
     document.getElementById('modal-ajout').style.display = 'none';
-    // On vide les champs pour la prochaine fois
     document.getElementById('ajout-prenom').value = '';
     document.getElementById('ajout-nom').value = '';
+    document.getElementById('ajout-pai').value = '';
     document.getElementById('ajout-classe').value = 'Non précisée';
 }
 
@@ -663,6 +737,7 @@ function validerAjoutEnfant() {
     let prenom = document.getElementById('ajout-prenom').value.trim();
     let nom = document.getElementById('ajout-nom').value.trim();
     let classe = document.getElementById('ajout-classe').value;
+    let pai = document.getElementById('ajout-pai').value.trim(); // <--- RÉCUPÉRATION DU CHAMP
 
     if (prenom === "" || nom === "") {
         alert("❌ Le prénom et le nom sont obligatoires.");
@@ -680,6 +755,7 @@ function validerAjoutEnfant() {
         prenom: prenom,
         nom: nom,
         classe: classe,
+        pai: pai, // <--- INTEGRATION DE LA SAISIE
         aMange: false,
         service: null,
         heurePointage: null,
